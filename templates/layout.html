@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThirdEye — AI Computer Vision System</title>
+    <!-- Fonts & Bootstrap 5 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- ThirdEye Master Design System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Mobile Sidebar Backdrop -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <!-- Left Navigation Sidebar -->
+        <aside class="app-sidebar" id="appSidebar">
+            <!-- Brand Header -->
+            <a href="{{ url_for('home') }}" class="sidebar-brand">
+                <div class="brand-icon-box">
+                    <span>&#9670;</span>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">THIRDEYE</span>
+                    <span class="brand-subtitle">Vision Intelligence</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <span class="nav-section-label">Main Navigation</span>
+
+                <a class="sidebar-link {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">
+                    <span class="link-icon">&#127968;</span>
+                    <span>Home</span>
+                </a>
+
+                {% if session.get('user_id') %}
+                    <span class="nav-section-label">Forensic Modules</span>
+
+                    <a class="sidebar-link {% if request.endpoint == 'sketch_constructor' %}active{% endif %}" href="{{ url_for('sketch_constructor') }}">
+                        <span class="link-icon">&#9999;&#65039;</span>
+                        <span>Sketch Constructor</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.endpoint == 'photo_to_sketch' %}active{% endif %}" href="{{ url_for('photo_to_sketch') }}">
+                        <span class="link-icon">&#128444;&#65039;</span>
+                        <span>Photo to Sketch</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.endpoint == 'recognition' %}active{% endif %}" href="{{ url_for('recognition') }}">
+                        <span class="link-icon">&#128269;</span>
+                        <span>Face Recognition</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.endpoint == 'create_variations' %}active{% endif %}" href="{{ url_for('create_variations') }}">
+                        <span class="link-icon">&#128101;</span>
+                        <span>Face Variations</span>
+                    </a>
+
+                    <a class="sidebar-link {% if request.endpoint == 'create_poster' %}active{% endif %}" href="{{ url_for('create_poster') }}">
+                        <span class="link-icon">&#128203;</span>
+                        <span>Create Poster</span>
+                    </a>
+
+                    {% if session.get('role') == 'admin' %}
+                        <span class="nav-section-label">Administration</span>
+                        <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                            <span class="link-icon">&#9881;&#65039;</span>
+                            <span>Admin Dashboard</span>
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="nav-section-label">Access</span>
+                    <a class="sidebar-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+                        <span class="link-icon">&#128274;</span>
+                        <span>Login</span>
+                    </a>
+                    <a class="sidebar-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">
+                        <span class="link-icon">&#128100;</span>
+                        <span>Register</span>
+                    </a>
+                {% endif %}
+            </nav>
+
+            <!-- Bottom User Profile Card -->
+            <div class="sidebar-user-area">
+                {% if session.get('user_id') %}
+                    <div class="user-card">
+                        <div class="user-avatar">
+                            {{ (session.get('full_name') or session.get('username'))[0]|upper }}
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name" title="{{ session.get('full_name') or session.get('username') }}">
+                                {{ session.get('full_name') or session.get('username') }}
+                            </div>
+                            <div class="user-role-badge">
+                                {{ session.get('role', 'user')|capitalize }}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="btn-sidebar-logout">
+                        <span>&#10140;</span>
+                        <span>Logout</span>
+                    </a>
+                {% else %}
+                    <div class="sidebar-auth-btns">
+                        <a href="{{ url_for('login') }}" class="btn-neon-primary text-center w-100" style="padding: 8px 12px; font-size: 0.86rem;">
+                            Login
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn-neon-secondary text-center w-100" style="padding: 8px 12px; font-size: 0.86rem;">
+                            Register
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="app-main">
+            <!-- Contextual Top Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Toggle navigation">
+                        &#9776;
+                    </button>
+                    <div>
+                        <h1 class="header-page-title">
+                            {% if request.endpoint == 'home' %}
+                                {% if session.get('user_id') %}Workspace Dashboard{% else %}ThirdEye Vision Intelligence{% endif %}
+                            {% elif request.endpoint == 'sketch_constructor' %}
+                                Composite Sketch Constructor
+                            {% elif request.endpoint == 'photo_to_sketch' %}
+                                Photo-to-Sketch Converter
+                            {% elif request.endpoint == 'recognition' %}
+                                Biometric Face Recognition
+                            {% elif request.endpoint == 'create_variations' %}
+                                Facial Appearance Variations
+                            {% elif request.endpoint == 'create_poster' %}
+                                Printable Poster Generator
+                            {% elif request.endpoint == 'construct_face' %}
+                                Facial Reconstruction
+                            {% elif request.endpoint == 'admin_dashboard' %}
+                                Administrative Control Panel
+                            {% elif request.endpoint == 'login' %}
+                                Secure Account Access
+                            {% elif request.endpoint == 'register' %}
+                                System Registration
+                            {% else %}
+                                ThirdEye Forensic System
+                            {% endif %}
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="header-status-pill">
+                        <span class="status-indicator"></span>
+                        <span>Engine Active</span>
+                    </div>
+                    {% if session.get('user_id') %}
+                        <span class="header-page-badge">
+                            {{ session.get('role', 'user')|upper }}
+                        </span>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Glass Toast Notifications Container -->
+            <div class="toast-container-custom" id="toastContainer">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            {% set toast_type = 'info' %}
+                            {% if category in ['danger', 'error'] %}
+                                {% set toast_type = 'danger' %}
+                            {% elif category == 'success' %}
+                                {% set toast_type = 'success' %}
+                            {% elif category == 'warning' %}
+                                {% set toast_type = 'warning' %}
+                            {% endif %}
+                            <div class="glass-toast toast-{{ toast_type }}" role="alert">
+                                <div class="toast-icon">
+                                    {% if toast_type == 'success' %}
+                                        &#10004;
+                                    {% elif toast_type == 'danger' %}
+                                        &#9888;
+                                    {% elif toast_type == 'warning' %}
+                                        &#9888;
+                                    {% else %}
+                                        &#8505;
+                                    {% endif %}
+                                </div>
+                                <div class="toast-content">{{ message }}</div>
+                                <button type="button" class="toast-close-btn" onclick="dismissToast(this.closest('.glass-toast'))" aria-label="Close">&times;</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Content Body -->
+            <div class="app-content-body">
+                {% block content %}{% endblock %}
+            </div>
+
+            <!-- Footer -->
+            <footer class="app-footer">
+                <div class="container-fluid">
+                    <p class="mb-0">&copy; 2026 ThirdEye. All Rights Reserved. Computer Vision & Biometric Systems.</p>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile navigation toggle
+            const mobileToggle = document.getElementById('mobileNavToggle');
+            const sidebar = document.getElementById('appSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (mobileToggle && sidebar && backdrop) {
+                mobileToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('sidebar-open');
+                    backdrop.classList.toggle('active');
+                });
+                backdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('sidebar-open');
+                    backdrop.classList.remove('active');
+                });
+            }
+
+            // Auto-dismiss glass toasts after 5 seconds
+            const toasts = document.querySelectorAll('.glass-toast');
+            toasts.forEach(function(toast) {
+                setTimeout(function() {
+                    dismissToast(toast);
+                }, 5000);
+            });
+        });
+
+        function dismissToast(el) {
+            if (!el) return;
+            el.classList.add('toast-hide');
+            setTimeout(function() {
+                if (el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            }, 300);
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-page-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon-badge">
+                <span>&#128274;</span>
+            </div>
+            <h2 class="auth-title">System Access</h2>
+            <p class="auth-subtitle">Sign in to your ThirdEye workspace</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="username" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Username
+                </label>
+                <input
+                    type="text"
+                    class="form-control glass-input"
+                    id="username"
+                    name="username"
+                    autocomplete="username"
+                    placeholder="Enter your username"
+                    required
+                >
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Password
+                </label>
+                <input
+                    type="password"
+                    class="form-control glass-input"
+                    id="password"
+                    name="password"
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn-neon-primary w-100" style="padding: 12px; font-size: 0.95rem;">
+                Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('register') }}">Create an account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

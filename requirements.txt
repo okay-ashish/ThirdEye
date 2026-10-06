@@ -1,0 +1,28 @@
+# ThirdEye Production Dependencies
+# Target Python Version: Python 3.11.x
+
+# Web Framework & Extensions
+Flask>=3.0.0,<4.0.0
+Flask-SQLAlchemy>=3.1.0,<4.0.0
+Flask-Bcrypt>=1.0.1,<2.0.0
+mysql-connector-python>=8.0.0
+
+# Computer Vision & Biometrics
+opencv-python>=4.8.0
+dlib>=19.24.0
+face_recognition>=1.3.0
+face_recognition_models>=0.3.0
+Pillow>=10.0.0
+numpy>=1.24.0,<2.0.0
+
+# Deep Learning Runtimes (CPU Inference)
+torch>=2.0.0
+onnxruntime>=1.16.0
+scipy>=1.11.0
+
+# Poster & Document Generation
+reportlab>=4.0.0
+pypdf>=4.0.0
+
+# Environment Configuration
+python-dotenv>=1.0.0

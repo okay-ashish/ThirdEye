@@ -1,0 +1,455 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .reconstruction-body {
+        background: transparent;
+        color: var(--text-primary);
+        padding: 2rem 1.2rem;
+        min-height: calc(100vh - var(--header-height) - 60px);
+    }
+
+    .reconstruction-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .page-title {
+        font-weight: 700;
+        font-size: 2.1rem;
+        color: var(--text-bright);
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+    }
+
+    .system-badge {
+        display: inline-block;
+        background: rgba(9, 132, 227, 0.12);
+        border: 1px solid var(--border-glass);
+        padding: 4px 16px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.8rem;
+        letter-spacing: 1.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--accent-secondary);
+        margin-bottom: 12px;
+    }
+
+    .disclaimer-card {
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass-subtle);
+        border-left: 4px solid var(--accent-secondary);
+        border-radius: var(--border-radius-md);
+        padding: 14px 20px;
+        margin-bottom: 25px;
+        backdrop-filter: blur(10px);
+        max-width: 1050px;
+        margin-left: auto;
+        margin-right: auto;
+        color: var(--text-primary);
+        box-shadow: var(--glass-shadow-sm);
+    }
+
+    /* Main Grid: Left Control Panel + Right Comparison Display */
+    .reconstruction-grid {
+        display: grid;
+        grid-template-columns: 310px 1fr;
+        gap: 25px;
+        max-width: 1200px;
+        margin: 0 auto 30px auto;
+    }
+
+    /* Left Control Sidebar */
+    .control-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .control-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        padding: 20px;
+        box-shadow: var(--glass-shadow-sm);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+    .control-card h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--accent-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-glass-subtle);
+    }
+
+    /* Skin Tone Selector in Sidebar */
+    .skin-swatch-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+    .skin-swatch-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-glass-subtle);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .skin-swatch-row:hover {
+        background: rgba(9, 132, 227, 0.12);
+        border-color: var(--accent-secondary);
+    }
+    .skin-swatch-row input {
+        display: none;
+    }
+    .skin-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        flex-shrink: 0;
+    }
+    .skin-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .skin-swatch-row.active {
+        background: rgba(0, 206, 201, 0.12);
+        border-color: var(--accent-secondary);
+        box-shadow: 0 0 10px rgba(0, 206, 201, 0.2);
+    }
+    .skin-swatch-row.active .skin-dot {
+        border-color: #ffffff;
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    .btn-regenerate {
+        width: 100%;
+        background: var(--gradient-primary);
+        border: none;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 10px 16px;
+        border-radius: var(--border-radius-sm);
+        box-shadow: var(--shadow-glow-cyan);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .btn-regenerate:hover {
+        background: var(--gradient-primary-hover);
+        transform: translateY(-2px);
+    }
+
+    /* Telemetry / Info Card */
+    .telemetry-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.82rem;
+    }
+    .telemetry-label {
+        color: var(--text-secondary);
+    }
+    .telemetry-value {
+        color: var(--text-bright);
+        font-weight: 600;
+    }
+
+    /* Right Main Comparison Display */
+    .comparison-cards-area {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .image-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        padding: 20px;
+        box-shadow: var(--glass-shadow-sm);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .image-card:hover {
+        border-color: rgba(0, 206, 201, 0.45);
+        box-shadow: var(--glass-shadow), var(--shadow-glow-cyan);
+    }
+    .image-card h4 {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--text-bright);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-glass-subtle);
+    }
+
+    .preview-wrapper {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 380px;
+        max-height: 460px;
+        overflow: hidden;
+        box-shadow: var(--shadow-glow-blue);
+    }
+    .preview-img {
+        max-width: 100%;
+        max-height: 430px;
+        object-fit: contain;
+        border-radius: 6px;
+    }
+
+    .meta-pills {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        font-size: 0.8rem;
+    }
+    .meta-pill {
+        background: rgba(9, 132, 227, 0.12);
+        border: 1px solid var(--border-glass);
+        color: var(--accent-secondary);
+        padding: 3px 10px;
+        border-radius: var(--border-radius-pill);
+        font-weight: 600;
+    }
+
+    /* Action Toolbar at Bottom */
+    .action-toolbar {
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        padding: 18px 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        align-items: center;
+        box-shadow: var(--glass-shadow-sm);
+    }
+
+    /* Loading Overlay */
+    #regen-loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.82);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    @media (max-width: 992px) {
+        .reconstruction-grid {
+            grid-template-columns: 1fr;
+        }
+        .comparison-cards-area {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="reconstruction-body">
+    <div class="container-fluid">
+        <div class="reconstruction-header">
+            <span class="system-badge">&#9670; Forensic Appearance Hypothesis</span>
+            <h1 class="page-title">COMPUTER-GENERATED FACIAL RECONSTRUCTION</h1>
+            <p style="color: var(--accent-secondary); font-size: 0.95rem; font-weight: 600; margin-top: 4px; margin-bottom: 0;">AI-assisted sketch-to-face synthesis with structural guidance</p>
+        </div>
+
+        <!-- Mandatory Disclaimer -->
+        <div class="disclaimer-card">
+            <div class="d-flex align-items-center">
+                <div class="me-3 fs-3 text-warning">&#9888;</div>
+                <div>
+                    <strong style="color: var(--text-bright);">Mandatory Forensic & Legal Disclaimer:</strong><br>
+                    <span style="color: var(--text-secondary); font-size: 0.92rem;">
+                        This is a computer-generated facial reconstruction computed from the supplied sketch and anatomical landmarks. It serves as an approximate forensic appearance hypothesis and is not an exact photographic representation of an individual.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="reconstruction-grid">
+            <!-- Left: Reconstruction Controls & Telemetry -->
+            <div class="control-sidebar">
+                <!-- Skin Tone Customization Card -->
+                <div class="control-card">
+                    <h4>Skin Tone Palette</h4>
+                    <form id="regenForm" method="POST" action="{{ url_for('construct_face') }}">
+                        <input type="hidden" name="sketch_filename" value="{{ result.sketch_filename }}">
+                        <div class="skin-swatch-list">
+                            {% for tone_id, tone in skin_tones.items() %}
+                            <label class="skin-swatch-row {% if result.skin_tone == tone_id %}active{% endif %}">
+                                <input type="radio" name="skin_tone" value="{{ tone_id }}" {% if result.skin_tone == tone_id %}checked{% endif %}>
+                                <span class="skin-dot" style="background-color: {{ tone.hex }};"></span>
+                                <span class="skin-text">{{ tone.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" id="regenBtn" class="btn-regenerate">
+                            <span>&#8635;</span> REGENERATE RECONSTRUCTION
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Forensic Telemetry Card -->
+                <div class="control-card">
+                    <h4>Reconstruction Telemetry</h4>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Active Skin Tone:</span>
+                        <span class="telemetry-value">{{ result.skin_tone_name }}</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Synthesis Time:</span>
+                        <span class="telemetry-value">{{ result.processing_time }}s</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Output Resolution:</span>
+                        <span class="telemetry-value">{{ result.dimensions[0] }} &times; {{ result.dimensions[1] }} px</span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Landmark Detection:</span>
+                        <span class="telemetry-value" style="color: var(--accent-secondary);">
+                            {{ '68-pt Detected (' + result.detection_tier + ')' if result.landmarks_detected else 'Geometric Extrapolation' }}
+                        </span>
+                    </div>
+                    <div class="telemetry-row">
+                        <span class="telemetry-label">Pipeline Architecture:</span>
+                        <span class="telemetry-value" style="font-size: 0.76rem; max-width: 170px; text-align: right;">{{ result.method }}</span>
+                    </div>
+                    {% if result.ai_model_status %}
+                    <div class="telemetry-row" style="margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-glass-subtle);">
+                        <span class="telemetry-label">Engine Status:</span>
+                        <span class="telemetry-value" style="font-size: 0.74rem; color: {% if result.engine_used == 'learned_cyclegan' %}var(--accent-secondary){% else %}#f39c12{% endif %}; max-width: 170px; text-align: right;">
+                            {{ result.ai_model_status }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right: Side-by-Side Comparison -->
+            <div class="comparison-cards-area">
+                <!-- Original Supplied Sketch -->
+                <div class="image-card">
+                    <h4>Original Supplied Sketch</h4>
+                    <div class="preview-wrapper">
+                        <img src="{{ url_for('static', filename='generated_faces/' + result.sketch_filename) }}" alt="Supplied Sketch" class="preview-img">
+                    </div>
+                    <div class="meta-pills">
+                        <span class="meta-pill">Source: Supplied Input</span>
+                        <span class="meta-pill">Preserved: Pristine</span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('static', filename='generated_faces/' + result.sketch_filename) }}" class="btn-neon-secondary w-100 text-center py-2" download="original_sketch.png">
+                            Download Original Sketch
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Computer-Generated Facial Reconstruction -->
+                <div class="image-card">
+                    <h4>Computer-Generated Facial Reconstruction</h4>
+                    <div class="preview-wrapper">
+                        <img src="{{ url_for('static', filename='generated_faces/' + result.reconstruction_filename) }}" alt="Computer-Generated Face" class="preview-img">
+                    </div>
+                    <div class="meta-pills">
+                        <span class="meta-pill">Tone: {{ result.skin_tone_name }}</span>
+                        <span class="meta-pill">Engine: {{ 'AI Neural Synthesis' if result.engine_used == 'learned_cyclegan' else 'Procedural Fallback' }}</span>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('static', filename='generated_faces/' + result.reconstruction_filename) }}" class="btn-neon-primary w-100 text-center py-2 fw-bold" download="reconstructed_face.png">
+                            Download Reconstructed Face
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Action Toolbar -->
+        <div class="action-toolbar">
+            <form method="POST" action="{{ url_for('create_variations') }}" class="m-0">
+                <input type="hidden" name="base_face_filename" value="{{ result.reconstruction_filename }}">
+                <button type="submit" class="btn-neon-primary fw-bold px-4 py-2 fs-6">
+                    &#128101; CREATE FACE VARIATIONS
+                </button>
+            </form>
+            <a href="{{ url_for('sketch_constructor') }}" class="btn-neon-secondary py-2">&#8592; Back to Sketch Constructor</a>
+            <a href="{{ url_for('photo_to_sketch') }}" class="btn-neon-secondary py-2">&#8592; Back to Photo Converter</a>
+            <a href="{{ url_for('recognition') }}" class="btn-neon-secondary py-2">Test in Face Recognition &#8594;</a>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal Overlay -->
+<div id="regen-loading-overlay">
+    <div style="background: var(--bg-surface-strong); border: 1px solid var(--border-glass); padding: 35px 45px; border-radius: 12px; text-align: center; box-shadow: var(--shadow-glow-cyan); max-width: 440px;">
+        <div style="display: inline-block; width: 55px; height: 55px; border: 4px solid rgba(0, 206, 201, 0.2); border-radius: 50%; border-top-color: var(--accent-secondary); animation: spin 1s ease-in-out infinite; margin-bottom: 18px;"></div>
+        <h4 style="color: var(--text-bright); font-weight: 700; margin-bottom: 8px;">Generating facial appearance...</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0;">Running sketch-to-face model with calibrated Fitzpatrick tone...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll('.skin-swatch-row');
+        rows.forEach(row => {
+            row.addEventListener('click', function () {
+                rows.forEach(r => r.classList.remove('active'));
+                this.classList.add('active');
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            });
+        });
+
+        const regenForm = document.getElementById('regenForm');
+        const overlay = document.getElementById('regen-loading-overlay');
+        const regenBtn = document.getElementById('regenBtn');
+        if (regenForm && overlay) {
+            regenForm.addEventListener('submit', function () {
+                overlay.style.display = 'flex';
+                if (regenBtn) regenBtn.disabled = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

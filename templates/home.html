@@ -1,0 +1,362 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% if session.get('user_id') %}
+    <!-- ======================================================================
+         AUTHENTICATED UNIFIED DASHBOARD WORKSPACE
+         ====================================================================== -->
+    <div class="dashboard-hero">
+        <div class="container-fluid">
+            <h2 class="dashboard-greeting">Welcome, {{ session.get('full_name') or session.get('username') }}</h2>
+            <p class="dashboard-subtext">Your computer vision workspace</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="quick-actions-bar">
+        <span class="quick-action-label">Quick Actions:</span>
+        <a href="{{ url_for('sketch_constructor') }}" class="btn-neon-primary" style="padding: 7px 18px; font-size: 0.85rem;">
+            <span>&#9999;&#65039;</span> Create Sketch
+        </a>
+        <a href="{{ url_for('photo_to_sketch') }}" class="btn-neon-secondary" style="padding: 7px 18px; font-size: 0.85rem;">
+            <span>&#128444;&#65039;</span> Photo to Sketch
+        </a>
+        <a href="{{ url_for('recognition') }}" class="btn-neon-secondary" style="padding: 7px 18px; font-size: 0.85rem;">
+            <span>&#128269;</span> Face Recognition
+        </a>
+        <a href="{{ url_for('create_poster') }}" class="btn-neon-secondary" style="padding: 7px 18px; font-size: 0.85rem;">
+            <span>&#128203;</span> Create Poster
+        </a>
+    </div>
+
+    <!-- Core Features Grid -->
+    <div class="features-grid-container">
+        <div class="row g-4">
+            <!-- 1. SKETCH CONSTRUCTOR -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#9999;&#65039;</div>
+                        <h3>SKETCH CONSTRUCTOR</h3>
+                        <p>Create a composite facial sketch using facial components.</p>
+                    </div>
+                    <a href="{{ url_for('sketch_constructor') }}" class="feature-action-link">
+                        <span>Launch Constructor</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 2. PHOTO TO SKETCH -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#128444;&#65039;</div>
+                        <h3>PHOTO TO SKETCH</h3>
+                        <p>Convert a photograph into a line-based sketch.</p>
+                    </div>
+                    <a href="{{ url_for('photo_to_sketch') }}" class="feature-action-link">
+                        <span>Convert Photo</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. CONSTRUCT FACE -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#128100;</div>
+                        <h3>CONSTRUCT FACE</h3>
+                        <p>Create a computer-generated facial reconstruction from a supplied sketch.</p>
+                    </div>
+                    <a href="{{ url_for('sketch_constructor') }}" class="feature-action-link">
+                        <span>Reconstruct Face</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 4. FACE VARIATIONS -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#128101;</div>
+                        <h3>FACE VARIATIONS</h3>
+                        <p>Explore controlled appearance variations based on a generated/reconstructed face.</p>
+                    </div>
+                    <a href="{{ url_for('create_variations') }}" class="feature-action-link">
+                        <span>Explore Variations</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 5. FACE RECOGNITION -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#128269;</div>
+                        <h3>FACE RECOGNITION</h3>
+                        <p>Compare an uploaded face against authorized enrolled records.</p>
+                    </div>
+                    <a href="{{ url_for('recognition') }}" class="feature-action-link">
+                        <span>Scan Records</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 6. CREATE POSTER -->
+            <div class="col-xl-4 col-md-6">
+                <div class="feature-box">
+                    <div>
+                        <div class="feature-icon-wrapper">&#128203;</div>
+                        <h3>CREATE POSTER</h3>
+                        <p>Create printable A4 person, public-information, or missing-person posters.</p>
+                    </div>
+                    <a href="{{ url_for('create_poster') }}" class="feature-action-link">
+                        <span>Design Poster</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- ======================================================================
+         PUBLIC LANDING PAGE (UNAUTHENTICATED)
+         ====================================================================== -->
+    <!-- Hero Section -->
+    <section class="landing-hero">
+        <div class="container">
+            <div class="landing-hero-badge">
+                <span>&#9670;</span> Computer Vision & Biometric Workspace
+            </div>
+            <h1 class="landing-hero-title">
+                ThirdEye <span>Forensic & Vision Intelligence</span>
+            </h1>
+            <p class="landing-hero-sub">
+                An integrated computer-vision platform providing composite sketch synthesis, algorithmic facial reconstruction, controlled appearance exploration, authorized biometric matching, and publication-ready notice generation.
+            </p>
+            <div class="landing-hero-actions">
+                <a href="{{ url_for('register') }}" class="btn-neon-primary" style="padding: 12px 32px; font-size: 1rem;">
+                    Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn-neon-secondary" style="padding: 12px 30px; font-size: 1rem;">
+                    Login
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why ThirdEye Matters -->
+    <section class="landing-section">
+        <div class="container">
+            <div class="landing-section-header">
+                <span class="landing-section-badge">Capabilities Overview</span>
+                <h2 class="landing-section-title">Why ThirdEye Matters</h2>
+                <p class="landing-section-desc">
+                    ThirdEye bridges fragmented investigative workflows into a unified, reproducible computer-vision environment.
+                </p>
+            </div>
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6">
+                    <div class="glass-card" style="height: 100%;">
+                        <h4 style="color: var(--accent-primary); font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">
+                            Unified Vision Workflows
+                        </h4>
+                        <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.2rem;">
+                            Traditional forensic sketch work and computerized image processing often exist as disconnected silos. ThirdEye combines foundational computer-vision workflows into a cohesive pipeline:
+                        </p>
+                        <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 1.25rem; margin-bottom: 0;">
+                            <li>Facial sketch construction from standardized anatomical components</li>
+                            <li>Bidirectional photo-to-sketch transformation</li>
+                            <li>Computer-generated facial reconstruction from composite sketches</li>
+                            <li>Controlled appearance variations (age progression, facial hair, hairstyles, eyewear)</li>
+                            <li>Biometric face recognition against authorized enrolled records</li>
+                            <li>Standardized printable A4 public-information and notice posters</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="glass-card" style="height: 100%; border-color: rgba(0, 206, 201, 0.25);">
+                        <h4 style="color: var(--text-bright); font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">
+                            Methodological Precision & Ethics
+                        </h4>
+                        <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.2rem;">
+                            ThirdEye is engineered with strict technical discipline. Algorithmic reconstructions and appearance variations are analytical aids designed to explore visual hypotheses—not claims of guaranteed identity or exact biological ground truth.
+                        </p>
+                        <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 0;">
+                            By maintaining clear source attribution across real photographs, composite sketches, reconstructions, and appearance variations, the system empowers investigators and authorized analysts with actionable visual insights while maintaining full audit transparency.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Section -->
+    <section class="landing-section" style="background: rgba(15, 20, 25, 0.5);">
+        <div class="container">
+            <div class="landing-section-header">
+                <span class="landing-section-badge">Integrated Suite</span>
+                <h2 class="landing-section-title">Core System Features</h2>
+                <p class="landing-section-desc">
+                    Six specialized modules designed for investigative workflows and visual intelligence.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Feature 1: Sketch Constructor -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#9999;&#65039;</div>
+                            <h3>SKETCH CONSTRUCTOR</h3>
+                            <p>Create a composite facial sketch using modular facial components and intuitive canvas positioning.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Photo to Sketch -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#128444;&#65039;</div>
+                            <h3>PHOTO TO SKETCH</h3>
+                            <p>Convert photographic inputs into clean line-based sketches suitable for matching or constructor reference.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Construct Face -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#128100;</div>
+                            <h3>CONSTRUCT FACE</h3>
+                            <p>Create a computer-generated facial reconstruction from a supplied composite sketch using deep learning synthesis.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Feature 4: Face Variations -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#128101;</div>
+                            <h3>FACE VARIATIONS</h3>
+                            <p>Explore controlled appearance variations (hairstyles, aging, facial hair, accessories) on reconstructed faces.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Feature 5: Face Recognition -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#128269;</div>
+                            <h3>FACE RECOGNITION</h3>
+                            <p>Compare probe sketches or photographs against authorized enrolled records using high-dimensional facial encodings.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Feature 6: Poster Constructor -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-box">
+                        <div>
+                            <div class="feature-icon-wrapper">&#128203;</div>
+                            <h3>POSTER CONSTRUCTOR</h3>
+                            <p>Create printable A4 person, public-information, or missing-person posters with multi-image support and clean typography.</p>
+                        </div>
+                        <a href="{{ url_for('login') }}" class="feature-action-link">
+                            <span>Access Module</span> &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Purpose / Process Section -->
+    <section class="landing-section">
+        <div class="container">
+            <div class="landing-section-header">
+                <span class="landing-section-badge">Methodology</span>
+                <h2 class="landing-section-title">Our Purpose & Workflow</h2>
+                <p class="landing-section-desc">
+                    Providing an integrated computer-vision workspace for constructing sketches, generating facial reconstructions, exploring appearance variations, authorized matching, and creating public-information materials.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="glass-card text-center" style="height: 100%; padding: 2rem 1.5rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gradient); color: #fff; font-weight: 700; font-size: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: var(--glow-cyan);">
+                            1
+                        </div>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.6rem;">Construct / Ingest</h4>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">
+                            Assemble modular eyewitness sketches or convert existing reference photographs into clean sketch representations.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass-card text-center" style="height: 100%; padding: 2rem 1.5rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gradient); color: #fff; font-weight: 700; font-size: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: var(--glow-cyan);">
+                            2
+                        </div>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.6rem;">Synthesize & Vary</h4>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">
+                            Generate facial reconstructions and synthesize multi-scenario appearance variations like aging and hairstyles.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass-card text-center" style="height: 100%; padding: 2rem 1.5rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gradient); color: #fff; font-weight: 700; font-size: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: var(--glow-cyan);">
+                            3
+                        </div>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.6rem;">Biometric Match</h4>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">
+                            Execute high-precision 128-dimensional facial encoding comparison against authorized enrolled database records.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="glass-card text-center" style="height: 100%; padding: 2rem 1.5rem;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--accent-gradient); color: #fff; font-weight: 700; font-size: 1.25rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; box-shadow: var(--glow-cyan);">
+                            4
+                        </div>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.6rem;">Publish & Disseminate</h4>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">
+                            Format multi-source investigative imagery into publication-ready A4 bulletins and public-information flyers.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

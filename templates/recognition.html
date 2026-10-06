@@ -1,0 +1,205 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .recognition-body {
+        background: transparent;
+        color: var(--text-primary);
+        padding: 2.5rem 1.5rem;
+        min-height: calc(100vh - var(--header-height) - 60px);
+    }
+
+    .page-title {
+        text-align: center;
+        font-weight: 700;
+        font-size: 2.1rem;
+        color: var(--text-bright);
+        margin-bottom: 8px;
+    }
+    .page-description {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        max-width: 800px;
+        margin: 0 auto 35px auto;
+    }
+
+    .action-container {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        padding: 35px 30px;
+        box-shadow: var(--glass-shadow-sm);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 360px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 1.15rem;
+        color: var(--text-bright);
+        margin-bottom: 12px;
+    }
+
+    .form-control {
+        background: var(--bg-input);
+        border: 1px solid var(--border-glass-subtle);
+        color: var(--text-primary);
+        border-radius: var(--border-radius-md);
+        padding: 10px 14px;
+    }
+    .form-control::file-selector-button {
+        background: var(--gradient-primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        padding: 6px 14px;
+        margin-right: 12px;
+    }
+    .form-control:focus {
+        background: rgba(20, 26, 32, 0.95);
+        border-color: var(--border-glass-focus);
+        box-shadow: var(--shadow-glow-cyan);
+        color: #ffffff;
+    }
+
+    .results-title {
+        text-align: center;
+        margin-top: 50px;
+        margin-bottom: 30px;
+        font-weight: 700;
+        font-size: 1.8rem;
+        color: var(--text-bright);
+    }
+
+    .match-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: var(--glass-shadow-sm);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .match-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-secondary);
+        box-shadow: var(--glass-shadow), var(--shadow-glow-cyan);
+    }
+    .match-card-img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-bottom: 1px solid var(--border-glass-subtle);
+    }
+    .match-card .card-body {
+        padding: 20px;
+        flex-grow: 1;
+    }
+    .match-card .card-title {
+        font-weight: 700;
+        color: var(--text-bright);
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+    }
+    .match-card .card-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    .match-card .card-footer {
+        background: rgba(15, 20, 25, 0.7);
+        border-top: 1px solid var(--border-glass-subtle);
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+    .similarity-pill {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: var(--border-radius-pill);
+        background: var(--gradient-subtle);
+        border: 1px solid var(--border-glass);
+        color: var(--accent-secondary);
+        font-weight: 700;
+    }
+</style>
+
+<div class="recognition-body">
+    <div class="container">
+        <h1 class="page-title">Biometric Face Recognition</h1>
+        <p class="page-description">Upload a probe sketch or photograph to scan authorized records. Deep facial encodings are analyzed to compute similarity rankings against enrolled database entries.</p>
+
+        <div class="row justify-content-center g-4">
+            <!-- Left Container: Upload Form -->
+            <div class="col-lg-5 col-md-6">
+                <div class="action-container">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-4 text-center">
+                            <label for="sketch" class="form-label">Upload Probe Sketch / Image</label>
+                            <input class="form-control mb-3" type="file" id="sketch" name="sketch" required accept="image/*">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn-neon-primary w-100 py-3">
+                                <span>&#128269;</span> Find Potential Matches
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Container: Status/Info -->
+            <div class="col-lg-5 col-md-6">
+                <div class="action-container text-center">
+                    <h4 style="font-weight: 700; color: var(--text-bright); margin-bottom: 16px;">Scan Status</h4>
+
+                    {% if results %}
+                        <p class="lead mb-0" style="color: var(--accent-secondary); font-weight: 600;">
+                            &#10004; Biometric analysis complete. Ranked candidate matches displayed below.
+                        </p>
+                    {% elif results is not none and not results %}
+                        <p class="lead mb-0" style="color: var(--warning); font-size: 0.95rem;">
+                            &#9888; No matches exceeded the required similarity confidence threshold.
+                        </p>
+                    {% else %}
+                        <p class="lead mb-0" style="color: var(--text-secondary); font-size: 0.95rem;">
+                            Upload a probe sketch or photograph to initiate encoding extraction and cross-database biometric search.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        {% if results %}
+            <h2 class="results-title">Candidate Matches</h2>
+            <div class="row g-4">
+                {% for result in results %}
+                <div class="col-md-4">
+                    <div class="match-card">
+                        <img src="{{ url_for('uploaded_file', filename=result.person.image_path) }}" class="match-card-img" alt="{{ result.person.name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ result.person.name }}</h5>
+                            <p class="card-text"><strong>Details:</strong> {{ result.person.person_details }}</p>
+                        </div>
+                        <div class="card-footer text-center">
+                            <span class="similarity-pill">Similarity Score: {{ result.similarity }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-page-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-icon-badge">
+                <span>&#128100;</span>
+            </div>
+            <h2 class="auth-title">Register Account</h2>
+            <p class="auth-subtitle">Create your ThirdEye forensic workstation profile</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="mb-3">
+                <label for="full_name" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Full Name
+                </label>
+                <input
+                    type="text"
+                    class="form-control glass-input"
+                    id="full_name"
+                    name="full_name"
+                    autocomplete="name"
+                    placeholder="Enter your full name"
+                    required
+                >
+            </div>
+
+            <div class="mb-3">
+                <label for="username" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Username
+                </label>
+                <input
+                    type="text"
+                    class="form-control glass-input"
+                    id="username"
+                    name="username"
+                    autocomplete="username"
+                    placeholder="Choose a username"
+                    required
+                >
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Password
+                </label>
+                <input
+                    type="password"
+                    class="form-control glass-input"
+                    id="password"
+                    name="password"
+                    autocomplete="new-password"
+                    placeholder="Create a password"
+                    required
+                >
+            </div>
+
+            <div class="mb-4">
+                <label for="confirm_password" class="form-label" style="font-weight: 500; font-size: 0.88rem; color: var(--text-secondary);">
+                    Confirm Password
+                </label>
+                <input
+                    type="password"
+                    class="form-control glass-input"
+                    id="confirm_password"
+                    name="confirm_password"
+                    autocomplete="new-password"
+                    placeholder="Confirm your password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn-neon-primary w-100" style="padding: 12px; font-size: 0.95rem;">
+                Create Account
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

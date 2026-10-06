@@ -1,0 +1,590 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .sketch-body {
+        background: transparent;
+        color: var(--text-primary);
+        padding: 1.8rem 1.2rem;
+        min-height: calc(100vh - var(--header-height) - 60px);
+    }
+
+    .sketch-header-area {
+        text-align: center;
+        margin-bottom: 22px;
+    }
+    .sketch-title {
+        font-weight: 700;
+        font-size: 2.1rem;
+        color: var(--text-bright);
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+    }
+    .sketch-description {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        max-width: 750px;
+        margin: 0 auto;
+    }
+
+    /* Main Grid Workspace */
+    #sketch-workspace {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        padding: 20px;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* Left: Category Selector & Asset Drawer */
+    .parts-panel {
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: var(--border-radius-md);
+        display: flex;
+        flex-direction: column;
+        height: 640px;
+        overflow: hidden;
+    }
+
+    /* Category Navigation Tabs */
+    .category-tabs-container {
+        padding: 12px 10px 8px 10px;
+        border-bottom: 1px solid var(--border-glass-subtle);
+        background: rgba(15, 20, 25, 0.65);
+    }
+    .category-tabs-title {
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--accent-secondary);
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .category-pills {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    .cat-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-glass-subtle);
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 6px 4px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    .cat-btn:hover {
+        background: rgba(9, 132, 227, 0.15);
+        border-color: var(--accent-secondary);
+        color: var(--text-bright);
+        transform: translateY(-1px);
+    }
+    .cat-btn.active {
+        background: var(--gradient-primary);
+        border-color: transparent;
+        color: #ffffff;
+        box-shadow: var(--shadow-glow-cyan);
+    }
+    .cat-btn .cat-icon {
+        font-size: 1rem;
+    }
+
+    /* Category Asset Thumbnails Container */
+    .assets-scroll-area {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+    }
+    .active-category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border-glass-subtle);
+    }
+    .active-category-name {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text-bright);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .active-category-count {
+        font-size: 0.75rem;
+        background: rgba(0, 206, 201, 0.15);
+        color: var(--accent-secondary);
+        padding: 2px 8px;
+        border-radius: var(--border-radius-pill);
+        font-weight: 600;
+    }
+
+    .parts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .part-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: 8px;
+        padding: 6px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80px;
+        transition: all 0.22s ease-in-out;
+        position: relative;
+    }
+    .part-card:hover {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.08);
+        box-shadow: var(--shadow-glow-cyan);
+        transform: translateY(-2px);
+    }
+    .part-card img {
+        max-width: 100%;
+        max-height: 64px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+    .part-card .part-index {
+        position: absolute;
+        bottom: 3px;
+        right: 5px;
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    /* Right: Canvas & Controls */
+    .canvas-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Canvas Top Toolbar */
+    .canvas-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass-subtle);
+        padding: 8px 12px;
+        border-radius: var(--border-radius-sm);
+    }
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-tool {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass-subtle);
+        color: var(--text-primary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-tool:hover {
+        background: rgba(9, 132, 227, 0.18);
+        border-color: var(--accent-secondary);
+        color: var(--text-bright);
+    }
+    .btn-tool.active {
+        background: rgba(0, 206, 201, 0.2);
+        border-color: var(--accent-secondary);
+        color: var(--accent-secondary);
+    }
+    .btn-tool-danger {
+        color: #ff4757;
+        border-color: rgba(255, 71, 87, 0.3);
+    }
+    .btn-tool-danger:hover {
+        background: rgba(255, 71, 87, 0.15);
+        border-color: #ff4757;
+        color: #ffffff;
+    }
+
+    /* Fabric Canvas Wrapper */
+    .canvas-viewport-wrapper {
+        position: relative;
+        background: #ffffff;
+        border: 2px solid var(--border-glass);
+        border-radius: 10px;
+        box-shadow: var(--shadow-glow-blue);
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 520px;
+    }
+    #sketchCanvas {
+        display: block;
+    }
+
+    /* Selected Object Layer Controls Bar */
+    .layer-controls-bar {
+        margin-top: 10px;
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass);
+        padding: 8px 14px;
+        border-radius: var(--border-radius-sm);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.25s ease;
+    }
+    .layer-controls-bar.disabled {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    /* Construction Action Panel */
+    .construction-dock {
+        margin-top: 15px;
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass);
+        padding: 14px 18px;
+        border-radius: var(--border-radius-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        box-shadow: var(--glass-shadow-sm);
+    }
+
+    /* Skin Tone Swatches */
+    .skin-tone-selector-area {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .skin-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--accent-secondary);
+        letter-spacing: 0.8px;
+    }
+    .skin-swatches {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .skin-swatch-item {
+        position: relative;
+        cursor: pointer;
+    }
+    .skin-swatch-item input {
+        display: none;
+    }
+    .skin-swatch-bubble {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: block;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    }
+    .skin-swatch-item:hover .skin-swatch-bubble {
+        transform: scale(1.15);
+        border-color: #ffffff;
+    }
+    .skin-swatch-item input:checked + .skin-swatch-bubble {
+        border-color: var(--accent-secondary);
+        transform: scale(1.22);
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    /* Construct Button */
+    .btn-construct-action {
+        background: var(--gradient-primary);
+        border: none;
+        color: #ffffff !important;
+        font-weight: 700;
+        font-size: 0.98rem;
+        padding: 10px 24px;
+        border-radius: var(--border-radius-sm);
+        box-shadow: var(--shadow-glow-cyan);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.22s ease;
+        cursor: pointer;
+    }
+    .btn-construct-action:hover {
+        background: var(--gradient-primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(0, 206, 201, 0.5);
+    }
+    .btn-construct-action:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Loading Overlay Modal */
+    #reconstruction-loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.82);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .loading-card {
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass);
+        padding: 35px 45px;
+        border-radius: var(--border-radius-lg);
+        text-align: center;
+        box-shadow: var(--shadow-glow-cyan);
+        max-width: 440px;
+    }
+    .loading-spinner-ring {
+        display: inline-block;
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(0, 206, 201, 0.2);
+        border-radius: 50%;
+        border-top-color: var(--accent-secondary);
+        animation: spin 1s ease-in-out infinite;
+        margin-bottom: 20px;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 992px) {
+        #sketch-workspace {
+            grid-template-columns: 1fr;
+        }
+        .parts-panel {
+            height: 380px;
+        }
+    }
+</style>
+
+<div class="sketch-body">
+    <div class="container-fluid">
+        <div class="sketch-header-area">
+            <h1 class="sketch-title">Facial Composite Sketch Constructor</h1>
+            <p class="sketch-description">
+                Assemble a composite sketch from transparent forensic feature layers. Arrange, transform, and layer components, then generate a computer-synthesized 3D reconstruction.
+            </p>
+        </div>
+
+        <div id="sketch-workspace">
+            <!-- Left: Category-First Facial Parts Selector -->
+            <div class="parts-panel">
+                <div class="category-tabs-container">
+                    <div class="category-tabs-title">
+                        <span>Feature Categories</span>
+                        <span id="activeCategoryBadge" style="font-size: 0.72rem; opacity: 0.85;">Head</span>
+                    </div>
+                    <div class="category-pills">
+                        <button type="button" class="cat-btn active" data-category="head" title="Head Shapes">
+                            <span class="cat-icon">&#128100;</span>
+                            <span>Head</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="hair" title="Hairstyles">
+                            <span class="cat-icon">&#128135;</span>
+                            <span>Hair</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="eyebrows" title="Eyebrows">
+                            <span class="cat-icon">&#12336;&#65039;</span>
+                            <span>Brows</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="eyes" title="Eyes">
+                            <span class="cat-icon">&#128065;&#65039;</span>
+                            <span>Eyes</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="nose" title="Noses">
+                            <span class="cat-icon">&#128067;</span>
+                            <span>Nose</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="lips" title="Lips & Mouth">
+                            <span class="cat-icon">&#128068;</span>
+                            <span>Lips</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="mustach" title="Facial Hair">
+                            <span class="cat-icon">&#129492;</span>
+                            <span>Beard</span>
+                        </button>
+                        <button type="button" class="cat-btn" data-category="more" title="Glasses & Accessories">
+                            <span class="cat-icon">&#128083;</span>
+                            <span>Other</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="assets-scroll-area">
+                    <div class="active-category-header">
+                        <span class="active-category-name" id="categoryTitleDisplay">Head Shapes</span>
+                        <span class="active-category-count" id="categoryCountDisplay">20 Items</span>
+                    </div>
+
+                    <!-- Filterable Category Containers -->
+                    {% for category, images in parts.items() %}
+                    <div class="category-items-group" id="group-{{ category }}" style="{% if category != 'head' %}display: none;{% endif %}">
+                        <div class="parts-grid">
+                            {% for img_path in images %}
+                            <div class="part-card" data-category="{{ category }}" data-part="{{ url_for('static', filename='sketch_parts/' + img_path) }}" title="{{ category }} {{ loop.index }}">
+                                <img src="{{ url_for('static', filename='sketch_parts/' + img_path) }}" alt="{{ category }} {{ loop.index }}">
+                                <span class="part-index">#{{ loop.index }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right: Interactive Canvas & Forensic Operations -->
+            <div class="canvas-panel">
+                <!-- Top Canvas Utility Toolbar -->
+                <div class="canvas-toolbar">
+                    <div class="toolbar-group">
+                        <button type="button" id="loadDefaultFaceBtn" class="btn-tool" title="Load standard starting facial outline">
+                            <span>&#129302;</span> Base Face
+                        </button>
+                        <button type="button" id="toggleGuideBtn" class="btn-tool" title="Toggle vertical center symmetry guide">
+                            <span>&#10019;</span> Center Guide
+                        </button>
+                        <button type="button" id="snapToCenterBtn" class="btn-tool active" title="Toggle automatic snap-to-center">
+                            <span>&#129522;</span> Snap Center
+                        </button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button type="button" id="clearCanvasBtn" class="btn-tool btn-tool-danger" title="Clear all canvas layers">
+                            <span>&#128465;&#65039;</span> Clear
+                        </button>
+                        <button type="button" id="downloadBtn" class="btn-tool" title="Download transparent composite sketch">
+                            <span>&#128229;</span> Export PNG
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Workspace -->
+                <div class="canvas-viewport-wrapper">
+                    <canvas id="sketchCanvas" width="700" height="520"></canvas>
+                </div>
+
+                <!-- Layer Ordering & Object Transform Bar (Active on Selection) -->
+                <div class="layer-controls-bar disabled" id="layerControlsBar">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size: 0.78rem; font-weight: 700; color: var(--accent-secondary); text-transform: uppercase;">
+                            Layer Ordering:
+                        </span>
+                        <button type="button" id="bringForwardBtn" class="btn-tool" title="Bring selected layer one level up">
+                            &#9650; Bring Forward
+                        </button>
+                        <button type="button" id="sendBackwardBtn" class="btn-tool" title="Send selected layer one level down">
+                            &#9660; Send Backward
+                        </button>
+                        <button type="button" id="bringToFrontBtn" class="btn-tool" title="Bring selected layer to top">
+                            &#8607; Top
+                        </button>
+                        <button type="button" id="sendToBackBtn" class="btn-tool" title="Send selected layer to bottom">
+                            &#8609; Bottom
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" id="deleteBtn" class="btn-tool btn-tool-danger" title="Delete selected element">
+                            &#10006; Delete Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bottom Construction Dock: Skin Tone & Construct Action -->
+                <div class="construction-dock">
+                    <div class="skin-tone-selector-area">
+                        <span class="skin-label">Skin Tone:</span>
+                        <div class="skin-swatches" id="skinToneSwatches">
+                            {% for tone_id, tone in skin_tones.items() %}
+                            <label class="skin-swatch-item" title="{{ tone.name }}">
+                                <input type="radio" name="selected_skin_tone" value="{{ tone_id }}" {% if tone_id == 'medium' %}checked{% endif %}>
+                                <span class="skin-swatch-bubble" style="background-color: {{ tone.hex }};"></span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <span id="selectedSkinToneLabel" style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">
+                            Medium (Warm Beige)
+                        </span>
+                    </div>
+
+                    <div>
+                        <button type="button" id="constructFaceBtn" class="btn-construct-action">
+                            <span>&#9881;&#65039;</span> CONSTRUCT FACE &rarr;
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden Submission Form -->
+                <form id="constructFaceForm" method="POST" action="{{ url_for('construct_face') }}" style="display:none;">
+                    <input type="hidden" name="sketch_data" id="sketchDataInput">
+                    <input type="hidden" name="skin_tone" id="skinToneInput" value="medium">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal Overlay -->
+<div id="reconstruction-loading-overlay">
+    <div class="loading-card">
+        <div class="loading-spinner-ring"></div>
+        <h4 style="color: var(--text-bright); font-weight: 700; margin-bottom: 8px;">
+            Constructing Facial Reconstruction
+        </h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0;">
+            Detecting anatomical landmarks and synthesizing 3D facial planes...
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="{{ url_for('static', filename='js/sketch.js') }}"></script>
+{% endblock %}

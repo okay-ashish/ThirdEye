@@ -1,0 +1,767 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .variations-container {
+        padding: 2rem 1.5rem 4rem 1.5rem;
+        min-height: calc(100vh - var(--header-height) - 60px);
+    }
+
+    .system-badge {
+        display: inline-block;
+        background: rgba(9, 132, 227, 0.12);
+        border: 1px solid var(--border-glass);
+        padding: 4px 14px;
+        border-radius: var(--border-radius-pill);
+        font-size: 0.8rem;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--accent-secondary);
+        margin-bottom: 12px;
+    }
+
+    .page-title {
+        font-weight: 700;
+        font-size: 1.85rem;
+        color: var(--text-bright);
+        margin-bottom: 6px;
+    }
+
+    .disclaimer-banner {
+        background: var(--bg-surface-strong);
+        border: 1px solid var(--border-glass-subtle);
+        border-left: 4px solid var(--accent-secondary);
+        border-radius: var(--border-radius-md);
+        padding: 12px 18px;
+        margin-bottom: 25px;
+        backdrop-filter: blur(10px);
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+    }
+
+    /* 2-Column Responsive Layout */
+    .variations-layout {
+        display: grid;
+        grid-template-columns: 460px 1fr;
+        gap: 28px;
+        align-items: start;
+    }
+
+    @media (max-width: 992px) {
+        .variations-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Cards */
+    .config-card, .preview-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-lg);
+        padding: 22px;
+        backdrop-filter: blur(14px);
+        box-shadow: var(--glass-shadow-sm);
+    }
+
+    .config-section-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Source Selector Controls */
+    .source-mode-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .mode-tab-btn {
+        background: rgba(15, 20, 25, 0.7);
+        border: 1px solid var(--border-glass-subtle);
+        color: var(--text-secondary);
+        padding: 10px 12px;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .mode-tab-btn:hover {
+        border-color: var(--accent-secondary);
+        color: var(--text-bright);
+    }
+
+    .mode-tab-btn.active {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.15);
+        color: var(--accent-secondary);
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    /* Upload Drag & Drop Area */
+    .upload-dropzone {
+        background: rgba(10, 15, 20, 0.6);
+        border: 2px dashed rgba(0, 206, 201, 0.35);
+        border-radius: var(--border-radius-md);
+        padding: 18px 14px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 16px;
+    }
+
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.08);
+    }
+
+    /* Reconstructions Scroll Grid */
+    .recon-selection-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+        max-height: 180px;
+        overflow-y: auto;
+        padding-right: 4px;
+        margin-bottom: 16px;
+    }
+
+    .recon-item-card {
+        background: rgba(15, 20, 25, 0.7);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: var(--border-radius-sm);
+        padding: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .recon-item-card:hover {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.1);
+    }
+
+    .recon-item-card.selected {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.2);
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    .recon-item-thumb {
+        width: 100%;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        background: #000;
+    }
+
+    /* Live Source Preview Box */
+    .source-preview-box {
+        background: rgba(15, 20, 25, 0.8);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-md);
+        padding: 12px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .source-preview-thumb {
+        width: 76px;
+        height: 76px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #000;
+        border: 1px solid var(--border-glass-subtle);
+        flex-shrink: 0;
+    }
+
+    .source-preview-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Option Grids */
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .option-card {
+        background: rgba(15, 20, 25, 0.6);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: var(--border-radius-sm);
+        padding: 9px 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .option-card:hover {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.08);
+    }
+
+    .option-card.selected {
+        border-color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.15);
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    .option-card .opt-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-bright);
+        display: block;
+    }
+
+    .option-card input[type="radio"] {
+        display: none;
+    }
+
+    /* Age Adjustment Slider */
+    .age-control-box {
+        background: rgba(15, 20, 25, 0.6);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: var(--border-radius-sm);
+        padding: 14px 16px;
+        margin-bottom: 18px;
+    }
+
+    .age-value-badge {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--accent-secondary);
+        background: rgba(0, 206, 201, 0.1);
+        border: 1px solid var(--border-glass);
+        padding: 3px 12px;
+        border-radius: var(--border-radius-pill);
+    }
+
+    .age-slider {
+        width: 100%;
+        accent-color: var(--accent-secondary);
+        cursor: pointer;
+    }
+
+    /* Primary Result Box */
+    .primary-result-box {
+        background: rgba(9, 132, 227, 0.06);
+        border: 2px solid var(--accent-secondary);
+        border-radius: var(--border-radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    .primary-img-wrapper {
+        background: #000000;
+        border-radius: var(--border-radius-md);
+        padding: 10px;
+        text-align: center;
+        max-width: 520px;
+        margin: 0 auto 18px auto;
+        border: 1px solid var(--border-glass-subtle);
+    }
+
+    .primary-img-wrapper img {
+        max-width: 100%;
+        max-height: 480px;
+        border-radius: 6px;
+        object-fit: contain;
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spinner-neon {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(0, 206, 201, 0.2);
+        border-top-color: var(--accent-secondary);
+        border-radius: 50%;
+        animation: spin 1s infinite linear;
+        margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="variations-container">
+    <div class="container-fluid px-lg-4">
+        <!-- Header -->
+        <div class="mb-4">
+            <span class="system-badge">&#9670; FORENSIC APPEARANCE SYNTHESIS</span>
+            <h1 class="page-title">FACE VARIATIONS &amp; PROBABLE APPEARANCE GENERATOR</h1>
+            <p class="text-secondary small mb-0">
+                Synthesize high-fidelity probable appearance hypotheses using landmark-guided feature replacement and lighting harmonization.
+            </p>
+        </div>
+
+        <!-- Forensic Disclaimer -->
+        <div class="disclaimer-banner d-flex align-items-center">
+            <span class="me-2 fs-5 text-warning">&#9888;</span>
+            <div>
+                <strong style="color: var(--text-bright);">Computer-Generated Probable Appearance Variation:</strong>
+                Forensic investigative hypotheses only. Rendered features replace original facial regions naturally and do not imply exact biological predictions.
+            </div>
+        </div>
+
+        <div class="variations-layout">
+            <!-- ========================================== -->
+            <!-- LEFT COLUMN: CONFIGURATION & SOURCE        -->
+            <!-- ========================================== -->
+            <div class="config-card">
+                <form id="variationForm" method="POST" action="{{ url_for('create_variations') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="base_face_filename" id="baseFaceFilenameInput" value="{{ result.base_face_filename }}">
+
+                    <!-- 1. SOURCE SELECTION UI -->
+                    <div class="config-section-title">&#128247; SOURCE SELECTION</div>
+
+                    <div class="source-mode-tabs">
+                        <button type="button" class="mode-tab-btn active" id="btnModeUpload" onclick="setSourceMode('upload')">
+                            &#128247; Upload Photo
+                        </button>
+                        <button type="button" class="mode-tab-btn" id="btnModeRecon" onclick="setSourceMode('recon')">
+                            &#128100; Use Existing Reconstruction
+                        </button>
+                    </div>
+
+                    <!-- Mode A: Upload Photo Dropzone -->
+                    <div id="uploadSection">
+                        <div class="upload-dropzone" id="dropZone" onclick="document.getElementById('uploadPhotoInput').click()">
+                            <input type="file" id="uploadPhotoInput" name="uploaded_photo" accept="image/jpeg,image/png,image/webp" style="display: none;" onchange="handleFileSelected(this)">
+                            <div class="fs-3 mb-2 text-info">&#128247;</div>
+                            <div class="fw-bold small" style="color: var(--text-bright);">Click to Upload Photo or Drag &amp; Drop</div>
+                            <div class="text-secondary" style="font-size: 0.75rem;">Supports JPG, PNG, WEBP (Frontal photograph)</div>
+                        </div>
+                    </div>
+
+                    <!-- Mode B: Existing Reconstructions List -->
+                    <div id="reconSection" style="display: none;">
+                        {% if result.existing_reconstructions %}
+                        <div class="recon-selection-list">
+                            {% for rec in result.existing_reconstructions %}
+                            <div class="recon-item-card {% if result.base_face_filename == rec.filename %}selected{% endif %}"
+                                 onclick="selectReconstruction('{{ rec.filename }}', '{{ rec.url }}', '{{ rec.name }}', '{{ rec.dimensions }}', this)">
+                                <img src="{{ rec.url }}" alt="{{ rec.name }}" class="recon-item-thumb">
+                                <div class="small fw-semibold text-truncate" style="font-size: 0.72rem; color: var(--text-bright);">{{ rec.name }}</div>
+                                <div class="text-secondary" style="font-size: 0.68rem;">{{ rec.dimensions }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-3 mb-3 text-center border border-secondary border-opacity-25 rounded" style="background: rgba(0,0,0,0.3);">
+                            <div class="small text-secondary mb-1">No reconstructed faces in current session.</div>
+                            <a href="{{ url_for('sketch_constructor') }}" class="btn btn-sm btn-outline-cyan py-0" style="font-size: 0.75rem;">Construct Face First</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Live Source Preview Display -->
+                    <div class="source-preview-box" id="sourcePreviewBox">
+                        <img src="{{ result.source_url if result.source_url else '/static/img/placeholder_face.png' }}"
+                             alt="Source Face" class="source-preview-thumb" id="sourcePreviewImg"
+                             onerror="this.src='/static/img/placeholder_face.png'">
+                        <div class="source-preview-info">
+                            <div class="fw-bold text-truncate small" id="sourceFilenameDisplay" style="color: var(--text-bright);">
+                                {{ result.source_filename }}
+                            </div>
+                            <div class="text-secondary small mt-1" id="sourceDimensionsDisplay">
+                                Dimensions: {{ result.source_dimensions }}
+                            </div>
+                            <div class="mt-1" id="sourceStatusWrapper">
+                                {% if result.face_detected %}
+                                <span class="badge" id="faceStatusBadge" style="background: rgba(0, 206, 201, 0.15); border: 1px solid var(--accent-secondary); color: var(--accent-secondary); font-size: 0.72rem;">
+                                    &#10003; {{ result.face_status }}
+                                </span>
+                                {% else %}
+                                <span class="badge" id="faceStatusBadge" style="background: rgba(225, 112, 85, 0.15); border: 1px solid #e17055; color: #ff7675; font-size: 0.72rem;">
+                                    &#9888; {{ result.face_status }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Hair Style -->
+                    <div class="config-section-title">&#128135; HAIR STYLE</div>
+                    <div class="option-grid" id="hairGrid">
+                        {% set cur_hair = result.config.hair_style if result.config and result.config.hair_style else 'Keep Original' %}
+                        {% for h_opt in ['Keep Original', 'Short', 'Long', 'Straight', 'Wavy', 'Curly', 'Bald'] %}
+                        <label class="option-card {% if cur_hair == h_opt %}selected{% endif %}" onclick="selectOption('hair_style', this)">
+                            <input type="radio" name="hair_style" value="{{ h_opt }}" {% if cur_hair == h_opt %}checked{% endif %}>
+                            <span class="opt-name">{{ h_opt }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 3. Facial Hair -->
+                    <div class="config-section-title">&#129524; FACIAL HAIR</div>
+                    <div class="option-grid" id="facialHairGrid">
+                        {% set cur_fh = result.config.facial_hair if result.config and result.config.facial_hair else 'Keep Original' %}
+                        {% for fh_opt in ['Keep Original', 'Clean Shaven', 'Light Stubble', 'Heavy Stubble', 'Moustache', 'Full Beard', 'Beard + Moustache'] %}
+                        <label class="option-card {% if cur_fh == fh_opt %}selected{% endif %}" onclick="selectOption('facial_hair', this)">
+                            <input type="radio" name="facial_hair" value="{{ fh_opt }}" {% if cur_fh == fh_opt %}checked{% endif %}>
+                            <span class="opt-name">{{ fh_opt }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 4. Age Transformation -->
+                    <div class="config-section-title">&#9201; AGE TRANSFORMATION</div>
+                    <div class="age-control-box">
+                        <!-- Current Age Input -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="currentAgeInput" class="small text-secondary fw-semibold mb-0">CURRENT AGE (years):</label>
+                            <div style="width: 100px;">
+                                {% set cur_source_age = result.config.current_age if result.config and result.config.current_age is defined else 25 %}
+                                <input type="number" class="form-control form-control-sm text-center fw-bold"
+                                       id="currentAgeInput" name="current_age" min="10" max="90" step="1"
+                                       value="{{ cur_source_age }}" oninput="updateTargetAgeCalc()"
+                                       style="background: rgba(10, 15, 20, 0.8); border: 1px solid var(--accent-secondary); color: var(--accent-secondary);">
+                            </div>
+                        </div>
+
+                        <!-- Age Adjustment Slider -->
+                        <div class="d-flex justify-content-between align-items-center mb-1 mt-3">
+                            <span class="small text-secondary fw-semibold">AGE ADJUSTMENT:</span>
+                            <span class="age-value-badge" id="ageBadge">Same age (0)</span>
+                        </div>
+                        {% set cur_delta = result.config.age_delta if result.config and result.config.age_delta is defined else 0 %}
+                        <input type="range" class="age-slider" id="ageSlider" name="age_delta"
+                               min="-20" max="20" step="5" value="{{ cur_delta }}"
+                               oninput="updateTargetAgeCalc()">
+                        <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem; margin-top: 4px;">
+                            <span>-20 yrs</span>
+                            <span>-10</span>
+                            <span>0</span>
+                            <span>+10</span>
+                            <span>+20 yrs</span>
+                        </div>
+
+                        <!-- Computed Target Age Card -->
+                        <div class="p-2 mt-3 rounded border border-secondary border-opacity-25" style="background: rgba(0, 206, 201, 0.05);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-secondary">Approximate target age:</span>
+                                <span class="fw-bold" id="targetAgeDisplay" style="color: var(--accent-secondary); font-size: 0.95rem;">25 years</span>
+                            </div>
+                            <div class="text-secondary mt-1" style="font-size: 0.70rem; line-height: 1.2;">
+                                Computer-generated appearance at approximately the selected age (approximate target age, not exact biological age).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Headwear -->
+                    <div class="config-section-title">&#129506; HEADWEAR</div>
+                    <div class="option-grid" id="headwearGrid">
+                        {% set cur_hw = result.config.headwear if result.config and result.config.headwear else 'None' %}
+                        {% for hw_opt in ['None', 'Cap', 'Turban'] %}
+                        <label class="option-card {% if cur_hw == hw_opt %}selected{% endif %}" onclick="selectOption('headwear', this)">
+                            <input type="radio" name="headwear" value="{{ hw_opt }}" {% if cur_hw == hw_opt %}checked{% endif %}>
+                            <span class="opt-name">{{ hw_opt }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Single Generate Button -->
+                    <div class="mt-4">
+                        <button type="submit" id="generateBtn" class="btn-neon-primary w-100 py-3 fw-bold text-uppercase" style="letter-spacing: 1.5px;">
+                            &#9889; GENERATE VARIATION
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- RIGHT COLUMN: SINGLE GENERATED RESULT      -->
+            <!-- ========================================== -->
+            <div class="preview-card">
+                {% if not result.is_generated %}
+                <!-- State 1: Awaiting Generation -->
+                <div class="text-center py-5">
+                    <div class="primary-img-wrapper" style="max-width: 400px;">
+                        <img src="{{ result.source_url if result.source_url else '/static/img/placeholder_face.png' }}"
+                             alt="Source Input Face" id="mainSourceImg"
+                             onerror="this.src='/static/img/placeholder_face.png'">
+                    </div>
+                    <h4 class="fw-bold mt-3" style="color: var(--text-bright);">READY TO GENERATE VARIATION</h4>
+                    <span class="d-none">READY TO SYNTHESIZE APPEARANCE</span>
+                    <p class="text-secondary small max-w-500 mx-auto" style="max-width: 520px;">
+                        Select your desired hair style, facial hair, age adjustment, and headwear from the left panel, then click <strong>GENERATE VARIATION</strong>. The system will modify the selected facial regions naturally while preserving the subject's identity.
+                    </p>
+                </div>
+                {% else %}
+                <!-- State 2: Exactly ONE Primary Variation Generated -->
+                <div class="primary-result-box">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge" style="background: var(--accent-secondary); color: #000; font-weight: 700; font-size: 0.8rem; padding: 6px 12px; letter-spacing: 1px;">
+                                &#9733; PRIMARY APPEARANCE VARIATION
+                            </span>
+                        </div>
+                        <span class="badge border text-white-50" style="background: rgba(0,0,0,0.5);">
+                            Generated in {{ result.processing_time }}s
+                        </span>
+                    </div>
+
+                    <div class="primary-img-wrapper">
+                        <img src="{{ result.primary_variation.url }}" alt="Primary Appearance Variation" id="primaryImg">
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
+                        <div>
+                            <div class="small fw-semibold" style="color: var(--text-bright);">
+                                {{ result.primary_variation.summary }}
+                            </div>
+                            <div class="small text-secondary">
+                                Landmark-aligned feature replacement, scalp reconstruction, lighting &amp; color harmonized
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ result.primary_variation.url }}" download="{{ result.primary_variation.filename }}" class="btn-neon-secondary btn-sm px-3 py-2">
+                                &#128190; Download
+                            </a>
+                            <button type="button" class="btn-neon-primary btn-sm px-3 py-2" onclick="sendSingleToPoster('{{ result.primary_variation.filename }}')">
+                                &#128444; Use for Poster
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poster Navigation Bar -->
+                <div class="d-flex justify-content-between align-items-center pt-3 mt-4 border-top border-secondary border-opacity-25">
+                    <span class="text-secondary small">
+                        Saved in session storage: <code>static/generated_variations/</code>
+                    </span>
+                    <a href="{{ url_for('create_poster') }}" class="btn-neon-secondary px-4 py-2">
+                        Go to Poster Constructor &rarr;
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-neon"></div>
+    <h4 class="fw-bold text-white mb-2" style="letter-spacing: 1px;">Synthesizing appearance variation...</h4>
+    <p class="text-white-50 small">Harmonizing facial geometry, skin tone, and local illumination</p>
+</div>
+
+<!-- Form to send single image to Poster Constructor -->
+<form id="posterRedirectForm" method="POST" action="{{ url_for('create_poster') }}" style="display: none;">
+    <input type="hidden" name="base_face_filename" value="{{ result.base_face_filename }}">
+    <input type="hidden" name="selected_variation_filename" id="selectedVarFile" value="">
+</form>
+
+<script>
+    function setSourceMode(mode) {
+        const btnUpload = document.getElementById('btnModeUpload');
+        const btnRecon = document.getElementById('btnModeRecon');
+        const secUpload = document.getElementById('uploadSection');
+        const secRecon = document.getElementById('reconSection');
+
+        if (mode === 'upload') {
+            btnUpload.classList.add('active');
+            btnRecon.classList.remove('active');
+            secUpload.style.display = 'block';
+            secRecon.style.display = 'none';
+        } else {
+            btnRecon.classList.add('active');
+            btnUpload.classList.remove('active');
+            secRecon.style.display = 'block';
+            secUpload.style.display = 'none';
+        }
+    }
+
+    function handleFileSelected(input) {
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+
+        // Immediate preview update
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('sourcePreviewImg');
+            if (previewImg) previewImg.src = e.target.result;
+            const mainSourceImg = document.getElementById('mainSourceImg');
+            if (mainSourceImg) mainSourceImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        document.getElementById('sourceFilenameDisplay').textContent = file.name;
+        document.getElementById('sourceDimensionsDisplay').textContent = "Detecting dimensions...";
+        document.getElementById('faceStatusBadge').className = "badge bg-secondary";
+        document.getElementById('faceStatusBadge').innerHTML = "⌛ Analyzing Face...";
+
+        // Asynchronous validation & face detection
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        fetch('/api/upload-variation-source', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('baseFaceFilenameInput').value = data.filename;
+                document.getElementById('sourceFilenameDisplay').textContent = data.original_name;
+                document.getElementById('sourceDimensionsDisplay').textContent = `Dimensions: ${data.dimensions}`;
+
+                const badge = document.getElementById('faceStatusBadge');
+                if (data.face_detected) {
+                    badge.style.background = "rgba(0, 206, 201, 0.15)";
+                    badge.style.border = "1px solid var(--accent-secondary)";
+                    badge.style.color = "var(--accent-secondary)";
+                    badge.innerHTML = "&#10003; " + data.face_status;
+                } else {
+                    badge.style.background = "rgba(225, 112, 85, 0.15)";
+                    badge.style.border = "1px solid #e17055";
+                    badge.style.color = "#ff7675";
+                    badge.innerHTML = "&#9888; " + data.face_status;
+                }
+            } else {
+                alert("Upload Notice: " + (data.error || "Unable to process photo."));
+            }
+        })
+        .catch(err => {
+            console.error("Upload error:", err);
+        });
+    }
+
+    // Drag and drop events for dropzone
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+        });
+        dropZone.addEventListener('drop', e => {
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const input = document.getElementById('uploadPhotoInput');
+                input.files = e.dataTransfer.files;
+                handleFileSelected(input);
+            }
+        });
+    }
+
+    function selectReconstruction(filename, url, name, dimensions, cardElem) {
+        document.querySelectorAll('.recon-item-card').forEach(c => c.classList.remove('selected'));
+        cardElem.classList.add('selected');
+
+        document.getElementById('baseFaceFilenameInput').value = filename;
+        const previewImg = document.getElementById('sourcePreviewImg');
+        if (previewImg) previewImg.src = url;
+        const mainSourceImg = document.getElementById('mainSourceImg');
+        if (mainSourceImg) mainSourceImg.src = url;
+
+        document.getElementById('sourceFilenameDisplay').textContent = name;
+        document.getElementById('sourceDimensionsDisplay').textContent = `Dimensions: ${dimensions}`;
+
+        const badge = document.getElementById('faceStatusBadge');
+        badge.style.background = "rgba(0, 206, 201, 0.15)";
+        badge.style.border = "1px solid var(--accent-secondary)";
+        badge.style.color = "var(--accent-secondary)";
+        badge.innerHTML = "&#10003; Reconstructed Face Selected";
+    }
+
+    function selectOption(category, cardElem) {
+        const grid = cardElem.parentElement;
+        const cards = grid.querySelectorAll('.option-card');
+        cards.forEach(c => c.classList.remove('selected'));
+        cardElem.classList.add('selected');
+        const radio = cardElem.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+    }
+
+    function updateTargetAgeCalc() {
+        const curAgeInput = document.getElementById('currentAgeInput');
+        const slider = document.getElementById('ageSlider');
+        const badge = document.getElementById('ageBadge');
+        const targetDisplay = document.getElementById('targetAgeDisplay');
+
+        let curAge = parseInt(curAgeInput ? curAgeInput.value : 25) || 25;
+        curAge = Math.max(10, Math.min(90, curAge));
+
+        let val = parseInt(slider ? slider.value : 0) || 0;
+
+        if (val > 0) {
+            badge.textContent = `+${val} years older`;
+        } else if (val < 0) {
+            badge.textContent = `${val} years younger`;
+        } else {
+            badge.textContent = 'Original appearance (0)';
+        }
+
+        let targetAge = Math.max(10, Math.min(90, curAge + val));
+        if (targetDisplay) {
+            targetDisplay.textContent = `${targetAge} years`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTargetAgeCalc();
+
+        const form = document.getElementById('variationForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const overlay = document.getElementById('loadingOverlay');
+                const btn = document.getElementById('generateBtn');
+                if (overlay) overlay.style.display = 'flex';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '&#9203; SYNTHESIZING VARIATION...';
+                }
+            });
+        }
+    });
+
+    function sendSingleToPoster(filename) {
+        document.getElementById('selectedVarFile').value = filename;
+        document.getElementById('posterRedirectForm').submit();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1502 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    /* =========================================================================
+       THIRDEYE PHASE 6 — POSTER CONSTRUCTOR WORKSPACE
+       Desktop: Collapsible Left Controls + Large Centered A4 Live Preview
+       Mobile: Stacked Controls -> Centered A4 Preview
+       ========================================================================= */
+
+    .poster-app-container {
+        padding: 15px 20px 60px 20px;
+        min-height: calc(100vh - var(--header-height) - 40px);
+    }
+
+    /* Top Action Bar */
+    .poster-top-bar {
+        background: rgba(15, 23, 42, 0.75);
+        border: 1px solid var(--border-glass);
+        border-radius: var(--border-radius-md);
+        padding: 10px 18px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    /* Main Workspace Two-Column Layout */
+    .poster-workspace {
+        display: flex;
+        gap: 25px;
+        align-items: flex-start;
+        position: relative;
+    }
+
+    /* Left Controls Column */
+    .poster-controls-column {
+        width: 480px;
+        min-width: 420px;
+        max-width: 520px;
+        flex-shrink: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .poster-controls-column.collapsed {
+        width: 52px;
+        min-width: 52px;
+        overflow: hidden;
+    }
+
+    .poster-controls-column.collapsed .panel-body-content,
+    .poster-controls-column.collapsed .accordion-collapse {
+        display: none !important;
+    }
+
+    /* Right Preview Column */
+    .poster-preview-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-x: auto;
+        padding-bottom: 40px;
+    }
+
+    @media (max-width: 1100px) {
+        .poster-workspace {
+            flex-direction: column;
+        }
+        .poster-controls-column {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+        .poster-preview-column {
+            width: 100%;
+        }
+    }
+
+    /* Accordion Panels */
+    .poster-accordion-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-glass);
+        border-radius: 10px;
+        margin-bottom: 14px;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: var(--glass-shadow-sm);
+        transition: border-color 0.2s ease;
+    }
+
+    .poster-accordion-item:hover {
+        border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .poster-accordion-header {
+        padding: 13px 18px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: var(--text-bright);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.03);
+        user-select: none;
+        transition: background 0.2s ease;
+    }
+
+    .poster-accordion-header:hover {
+        background: rgba(56, 189, 248, 0.08);
+        color: var(--accent-secondary);
+    }
+
+    .poster-accordion-header .acc-icon {
+        transition: transform 0.25s ease;
+        font-size: 0.8rem;
+        color: var(--accent-secondary);
+    }
+
+    .poster-accordion-header.active .acc-icon {
+        transform: rotate(180deg);
+    }
+
+    .poster-accordion-body {
+        padding: 16px;
+        border-top: 1px solid var(--border-glass-subtle);
+        background: rgba(10, 14, 20, 0.4);
+    }
+
+    /* Purpose Selection Cards (5 Main Templates) */
+    .purpose-card-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .purpose-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1.5px solid var(--border-glass-subtle);
+        border-radius: 8px;
+        padding: 10px 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+
+    .purpose-card:hover {
+        border-color: var(--accent-secondary);
+        background: rgba(9, 132, 227, 0.12);
+    }
+
+    .purpose-card.active {
+        border-color: var(--accent-secondary);
+        background: var(--gradient-subtle);
+        box-shadow: var(--shadow-glow-cyan);
+    }
+
+    .purpose-title {
+        font-weight: 700;
+        font-size: 0.86rem;
+        color: var(--text-bright);
+        margin-bottom: 2px;
+    }
+
+    .purpose-subtitle {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+    }
+
+    /* Unified Image Selection Grid */
+    .unified-image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 9px;
+        max-height: 250px;
+        overflow-y: auto;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 8px;
+        border: 1px solid var(--border-glass-subtle);
+        margin-bottom: 12px;
+    }
+
+    .image-select-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 6px;
+        padding: 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .image-select-card:hover {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.1);
+    }
+
+    .image-select-card.is-primary {
+        border-color: #22c55e;
+        background: rgba(34, 197, 94, 0.18);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+
+    .image-select-card.is-variation-selected {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.18);
+    }
+
+    .img-select-thumb {
+        width: 100%;
+        height: 75px;
+        object-fit: cover;
+        border-radius: 4px;
+        background: #ffffff;
+        margin-bottom: 3px;
+    }
+
+    .img-source-badge {
+        font-size: 0.6rem;
+        font-weight: 700;
+        padding: 2px 4px;
+        border-radius: 3px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .badge-real {
+        background: #15803d;
+        color: #ffffff;
+    }
+
+    .badge-recon {
+        background: #0369a1;
+        color: #ffffff;
+    }
+
+    .badge-var {
+        background: #6d28d9;
+        color: #ffffff;
+    }
+
+    /* Form Inputs */
+    .form-control-thirdeye {
+        background: var(--bg-input);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .form-control-thirdeye:focus {
+        background: rgba(20, 26, 32, 0.95);
+        border-color: var(--border-glass-focus);
+        color: #ffffff;
+        box-shadow: var(--shadow-glow-cyan);
+        outline: none;
+    }
+
+    .form-label-thirdeye {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    /* Title Presets */
+    .title-preset-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass-subtle);
+        border-radius: 4px;
+        color: #94a3b8;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .title-preset-btn:hover {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: #38bdf8;
+        color: #ffffff;
+    }
+
+    /* =========================================================================
+       A4 LIVE PREVIEW SHEET
+       True A4 proportions: 210 x 297 mm (794px width x 1123px height at 96 DPI)
+       Designed for authentic real-world printing on white paper
+       ========================================================================= */
+    .a4-preview-canvas-wrapper {
+        background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%);
+        border: 1px solid var(--border-glass);
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .a4-wall-poster {
+        width: 794px;
+        min-height: 1123px;
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 1px rgba(0, 0, 0, 0.2);
+        padding: 35px 35px 30px 35px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Poster Internal Components */
+    .poster-hero-img {
+        max-width: 100%;
+        height: 275px;
+        object-fit: contain;
+        background: #ffffff;
+        border: 2px solid #0f172a;
+        border-radius: 3px;
+        margin: 0 auto;
+        display: block;
+    }
+
+    .poster-hero-label {
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-align: center;
+        padding: 3px 14px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-top: -2px;
+        display: inline-block;
+    }
+
+    .poster-name-display {
+        font-size: 2.1rem;
+        font-weight: 900;
+        text-align: center;
+        letter-spacing: 0.5px;
+        margin: 12px 0 8px 0;
+        color: #0f172a;
+        text-transform: uppercase;
+        line-height: 1.15;
+    }
+
+    .poster-contact-callout {
+        background: #0f172a;
+        border: 2px solid #0284c7;
+        border-radius: 6px;
+        padding: 12px 16px;
+        text-align: center;
+        color: #ffffff;
+        margin-top: 14px;
+    }
+
+    .poster-contact-callout.urgent {
+        background: #7f1d1d;
+        border-color: #dc2626;
+    }
+
+    .callout-phone-title {
+        color: #fef08a;
+        font-weight: 800;
+        font-size: 0.85rem;
+        letter-spacing: 0.8px;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+    }
+
+    .callout-phone-number {
+        color: #ffffff;
+        font-weight: 900;
+        font-size: 1.45rem;
+        letter-spacing: 1px;
+    }
+
+    .poster-disclaimer-box {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 6px 12px;
+        text-align: center;
+        font-size: 0.68rem;
+        color: #334155;
+        margin-top: 10px;
+    }
+
+    .poster-disclaimer-tag {
+        font-weight: 800;
+        color: #0f172a;
+        display: block;
+        margin-bottom: 2px;
+        letter-spacing: 0.5px;
+    }
+
+    /* =========================================================================
+       PRINT MODE STYLESHEET (@media print)
+       Hides all application UI, sidebar, buttons, controls
+       Prints only the 100% true A4 wall poster
+       ========================================================================= */
+    @media print {
+        html, body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #appSidebar,
+        .navbar,
+        .navbar-modern,
+        .poster-top-bar,
+        .poster-controls-column,
+        .app-header,
+        footer,
+        .btn,
+        .badge-status {
+            display: none !important;
+        }
+
+        .poster-app-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: auto !important;
+        }
+
+        .poster-workspace {
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .poster-preview-column {
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .a4-preview-canvas-wrapper {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: block !important;
+        }
+
+        .a4-wall-poster {
+            width: 100% !important;
+            min-height: 100vh !important;
+            box-shadow: none !important;
+            padding: 12mm !important;
+            margin: 0 !important;
+            page-break-after: always;
+            box-sizing: border-box !important;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+    }
+</style>
+
+<div class="poster-app-container">
+    <!-- Top Action Toolbar -->
+    <div class="poster-top-bar">
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('sketch_constructor') }}" class="btn-neon-secondary btn-sm px-3 py-1">
+                &#8592; Back
+            </a>
+            <span class="badge border" style="background: rgba(9, 132, 227, 0.2); border-color: var(--border-glass) !important; color: var(--accent-secondary); font-size: 0.78rem;">
+                A4 PRINTABLE PUBLIC-DISPLAY POSTER SYSTEM
+            </span>
+            <span class="badge bg-secondary" id="activePurposeBadge" style="font-size: 0.78rem;">
+                Template 1: Person Information
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn-neon-secondary btn-sm px-3 py-2 fw-semibold" id="btnToggleControls" onclick="toggleControlsPanel()">
+                &#9776; Toggle Controls
+            </button>
+            <button type="button" class="btn-neon-secondary btn-sm px-3 py-2 fw-semibold" onclick="updatePreviewAndPdf()">
+                &#8635; Refresh Preview
+            </button>
+            <button type="button" class="btn-neon-secondary btn-sm px-3 py-2 fw-bold" onclick="window.print()" id="btnPrintPoster">
+                &#128438; PRINT POSTER
+            </button>
+            {% if pdf_result %}
+            <a href="{{ url_for('download_poster', filename=pdf_result.pdf_filename) }}"
+               class="btn-neon-primary btn-sm px-3 py-2 fw-bold"
+               id="btnDownloadPdf"
+               download="{{ pdf_result.pdf_filename }}">
+                &#128190; DOWNLOAD PDF (A4)
+            </a>
+            {% else %}
+            <a href="#"
+               class="btn-neon-primary btn-sm px-3 py-2 fw-bold"
+               id="btnDownloadPdf"
+               download="poster.pdf">
+                &#128190; DOWNLOAD PDF (A4)
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Interactive Workspace -->
+    <div class="poster-workspace">
+
+        <!-- =====================================================================
+             LEFT: COLLAPSIBLE CONTROL PANEL
+             ===================================================================== -->
+        <div class="poster-controls-column" id="posterControlsColumn">
+
+            <!-- 1. TEMPLATE / PURPOSE SELECTION -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header active" onclick="toggleAccordion('panel-purpose', this)" id="acc-header-purpose">
+                    <span>&#128227; 1. Template / Purpose</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-purpose">
+                    <div class="purpose-card-grid">
+                        <!-- Purpose 1: Person Information Poster -->
+                        <div class="purpose-card {% if template_id == 1 %}active{% endif %}" onclick="selectTemplate(1, 'Person Information')" id="tpl-card-1">
+                            <div>
+                                <div class="purpose-title">1. Person Information Poster</div>
+                                <div class="purpose-subtitle">Clean public information display, large photo & traits</div>
+                            </div>
+                            <span class="badge bg-secondary">T1</span>
+                        </div>
+
+                        <!-- Purpose 2: Person + Multiple Appearances -->
+                        <div class="purpose-card {% if template_id == 2 %}active{% endif %}" onclick="selectTemplate(2, 'Person + Multiple Appearances')" id="tpl-card-2">
+                            <div>
+                                <div class="purpose-title">2. Person + Multiple Appearances</div>
+                                <div class="purpose-subtitle">Primary photo + grid of computer-generated appearance variations</div>
+                            </div>
+                            <span class="badge bg-info text-dark">T2</span>
+                        </div>
+
+                        <!-- Purpose 3: Public Information / Person of Interest -->
+                        <div class="purpose-card {% if template_id == 3 %}active{% endif %}" onclick="selectTemplate(3, 'Public Information / Person of Interest')" id="tpl-card-3">
+                            <div>
+                                <div class="purpose-title">3. Public Information / Person of Interest</div>
+                                <div class="purpose-subtitle">User-controlled title notice, tip line & case bulletin</div>
+                            </div>
+                            <span class="badge bg-warning text-dark">T3</span>
+                        </div>
+
+                        <!-- Purpose 4: Missing Person — Real Photo -->
+                        <div class="purpose-card {% if template_id == 4 %}active{% endif %}" onclick="selectTemplate(4, 'Missing Person — Real Photo')" id="tpl-card-4">
+                            <div>
+                                <div class="purpose-title">4. Missing Person — Real Photo</div>
+                                <div class="purpose-subtitle">Dominant header, large real photo, critical missing details</div>
+                            </div>
+                            <span class="badge bg-danger">MISSING</span>
+                        </div>
+
+                        <!-- Purpose 5: Missing Person — Real Photo + Probable Appearances -->
+                        <div class="purpose-card {% if template_id == 5 %}active{% endif %}" onclick="selectTemplate(5, 'Missing Person — Real Photo + Probable Appearances')" id="tpl-card-5">
+                            <div>
+                                <div class="purpose-title">5. Missing Person — Real Photo + Probable Appearances</div>
+                                <div class="purpose-subtitle">Real photo clearly separated from computer-generated probable appearances</div>
+                            </div>
+                            <span class="badge bg-danger">LONG-TERM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. IMAGE SOURCE (UNIFIED IMAGE SYSTEM) -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header" onclick="toggleAccordion('panel-images', this)" id="acc-header-images">
+                    <span>&#128247; 2. Image Source</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-images" style="display: none;">
+                    <!-- Direct Upload Real Photo -->
+                    <form method="POST" action="{{ url_for('create_poster') }}" enctype="multipart/form-data" class="mb-3">
+                        <label class="form-label-thirdeye">Upload a Real Photograph:</label>
+                        <div class="input-group input-group-sm">
+                            <input type="file" class="form-control form-control-sm" name="uploaded_photo" accept="image/*" required>
+                            <button type="submit" class="btn btn-warning fw-bold btn-sm">Upload Photo</button>
+                        </div>
+                        <small class="text-white-50" style="font-size:0.7rem;">Uploads directly into your session image pool.</small>
+                    </form>
+
+                    <!-- Unified Session & Database Image Picker -->
+                    <label class="form-label-thirdeye">Available Session &amp; Database Images (Click to set Primary):</label>
+                    <div class="unified-image-grid" id="imagePickerContainer">
+                        {% for img in available_images %}
+                        <div class="image-select-card {% if img.image_path == primary_face.image_path %}is-primary{% endif %}"
+                             onclick="setPrimaryImage(this, '{{ img.image_path }}', '{{ img.source_type }}', '{{ img.label }}')"
+                             id="thumb-card-{{ loop.index }}">
+                            <img src="/{{ img.image_path }}" class="img-select-thumb" alt="Thumb">
+                            <span class="img-source-badge {% if img.source_type == 'real_photo' %}badge-real{% elif img.source_type == 'reconstructed' %}badge-recon{% else %}badge-var{% endif %}">
+                                {% if img.source_type == 'real_photo' %}Real Photo{% elif img.source_type == 'reconstructed' %}Reconstruction{% else %}Appearance Var{% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Generate Probable Variations Button -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-info btn-sm w-100 fw-semibold" onclick="generateVariationsFromActivePhoto(this)">
+                            &#9889; Generate Probable Appearances from Primary Photo
+                        </button>
+                    </div>
+
+                    <!-- Appearance Variations / Hypotheses Selection (For Templates 2, 3, 5) -->
+                    <div id="variationSelectorGroup" style="display: none;">
+                        <label class="form-label-thirdeye">Select Probable Appearances / Variations (Up to 4):</label>
+                        <div class="p-2 rounded bg-black bg-opacity-25" style="max-height: 130px; overflow-y: auto;">
+                            {% for img in available_images %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input var-checkbox" type="checkbox" value="{{ img.image_path }}"
+                                       data-label="{{ img.label }}" data-source="{{ img.source_type }}"
+                                       id="chk-var-{{ loop.index }}"
+                                       {% if loop.index <= 4 and template_id in [2, 3, 5] and img.image_path != primary_face.image_path %}checked{% endif %}
+                                       onchange="updateVariationsSelection()">
+                                <label class="form-check-label text-truncate text-white-50 small" for="chk-var-{{ loop.index }}" style="max-width:300px; font-size:0.75rem;">
+                                    {{ img.label }} ({{ img.filename }})
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PERSON INFORMATION & CONTACT INFORMATION (SIDE-BY-SIDE ON DESKTOP) -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header" onclick="toggleAccordion('panel-details', this)" id="acc-header-details">
+                    <span>&#9997; 3. Person Information &amp; Contact Details</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-details" style="display: none;">
+                    <!-- Side-by-Side Responsive Grid -->
+                    <div class="row g-3">
+                        <!-- LEFT COLUMN: Person Details -->
+                        <div class="col-12 col-lg-6">
+                            <div class="fw-bold text-info mb-2 small text-uppercase">&#128100; Person Details</div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Full Name:</label>
+                                <input type="text" class="form-control-thirdeye fw-bold" id="inpName" value="{{ person_data.full_name }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye" id="lblAge">Age:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpAge" value="{{ person_data.age }}" oninput="onFieldInput()">
+                                </div>
+                                <div class="col-6" id="grpCurrentAge" style="display: none;">
+                                    <label class="form-label-thirdeye">Est. Current Age:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpCurrentAge" value="{{ person_data.current_age }}" placeholder="e.g. ~39" oninput="onFieldInput()">
+                                </div>
+                                <div class="col-6" id="grpGender">
+                                    <label class="form-label-thirdeye">Gender:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpGender" value="{{ person_data.gender }}" oninput="onFieldInput()">
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Height:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpHeight" value="{{ person_data.height }}" oninput="onFieldInput()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Build:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpBuild" value="{{ person_data.build }}" oninput="onFieldInput()">
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Hair:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpHair" value="{{ person_data.hair }}" oninput="onFieldInput()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Eyes:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpEyes" value="{{ person_data.eyes }}" oninput="onFieldInput()">
+                                </div>
+                            </div>
+
+                            <div class="mb-2" id="grpClothing" style="display: none;">
+                                <label class="form-label-thirdeye">Clothing When Last Seen:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpClothing" value="{{ person_data.clothing }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Identifying Marks / Scars:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpMarks" value="{{ person_data.identifying_marks }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="row g-2 mb-2" id="grpMissingTimeline" style="display: none;">
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Missing Since (Date):</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpDate" value="{{ person_data.date_missing }}" oninput="onFieldInput()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-thirdeye">Last Seen Location:</label>
+                                    <input type="text" class="form-control-thirdeye" id="inpLocation" value="{{ person_data.location }}" oninput="onFieldInput()">
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye" id="lblDesc">Description / Circumstances:</label>
+                                <textarea class="form-control-thirdeye" id="inpDesc" rows="2" oninput="onFieldInput()">{{ person_data.description }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: Contact Details -->
+                        <div class="col-12 col-lg-6">
+                            <div class="fw-bold text-warning mb-2 small text-uppercase">&#128222; Contact &amp; Authority Details</div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye text-warning fw-bold">Primary Contact Phone:</label>
+                                <input type="text" class="form-control-thirdeye fw-bold" id="inpPhone" value="{{ person_data.phone }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Alternate Phone:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpAltPhone" value="{{ person_data.alt_phone }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Contact Person / Authority Liaison:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpContactPerson" value="{{ person_data.contact_person }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Police Station / Authority:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpAgency" value="{{ person_data.police_station }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Case / Reference Number:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpCaseNo" value="{{ person_data.case_number }}" oninput="onFieldInput()">
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label-thirdeye">Additional Contact Note:</label>
+                                <input type="text" class="form-control-thirdeye" id="inpContactNote" value="Calls are confidential. 24/7 Helpline available." oninput="onFieldInput()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. APPEARANCE & IMAGE LABELS -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header" onclick="toggleAccordion('panel-appearance', this)" id="acc-header-appearance">
+                    <span>&#128101; 4. Appearance &amp; Image Labels</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-appearance" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label-thirdeye">Primary Image Label:</label>
+                        <input type="text" class="form-control-thirdeye" id="inpPrimaryLabel" value="{{ primary_face.label }}" oninput="onFieldInput()">
+                        <small class="text-white-50" style="font-size:0.7rem;">e.g. LAST KNOWN REAL PHOTO or COMPUTER-GENERATED RECONSTRUCTION</small>
+                    </div>
+
+                    <div class="p-2 rounded bg-black bg-opacity-25 small" id="appearanceDisclaimerNotice">
+                        <div class="text-info fw-bold mb-1">&#9432; Visual Labeling &amp; Safety Standard</div>
+                        <div class="text-white-50" style="font-size:0.75rem;">
+                            Computer-generated images are clearly marked as <strong>COMPUTER-GENERATED APPEARANCE</strong>. Confirmed real photographs are labeled <strong>LAST KNOWN REAL PHOTO</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. POSTER TEXT & CUSTOM TITLE -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header" onclick="toggleAccordion('panel-text', this)" id="acc-header-text">
+                    <span>&#128221; 5. Poster Text &amp; Custom Title</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-text" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label-thirdeye">Poster Title (User-Controlled):</label>
+                        <input type="text" class="form-control-thirdeye fw-bold" id="inpTitle" value="{{ person_data.custom_title }}" oninput="onFieldInput()">
+                        <div class="d-flex flex-wrap gap-1 mt-2">
+                            <button type="button" class="title-preset-btn" onclick="setTitlePreset('MISSING PERSON')">MISSING PERSON</button>
+                            <button type="button" class="title-preset-btn" onclick="setTitlePreset('PUBLIC INFORMATION')">PUBLIC INFORMATION</button>
+                            <button type="button" class="title-preset-btn" onclick="setTitlePreset('PERSON OF INTEREST')">PERSON OF INTEREST</button>
+                            <button type="button" class="title-preset-btn" onclick="setTitlePreset('IDENTIFICATION NOTICE')">IDENTIFICATION NOTICE</button>
+                            <button type="button" class="title-preset-btn" onclick="setTitlePreset('PERSON INFORMATION')">PERSON INFORMATION</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. PREVIEW / OUTPUT -->
+            <div class="poster-accordion-item">
+                <div class="poster-accordion-header" onclick="toggleAccordion('panel-output', this)" id="acc-header-output">
+                    <span>&#128424; 6. Preview &amp; Output</span>
+                    <span class="acc-icon">&#9660;</span>
+                </div>
+                <div class="poster-accordion-body" id="panel-output" style="display: none;">
+                    <div class="p-3 rounded bg-black bg-opacity-30 mb-3 small" id="pdfStatusCard">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-white-50">Document Standard:</span>
+                            <strong class="text-white">A4 (210 &times; 297 mm)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-white-50">Orientation:</span>
+                            <strong class="text-white">Portrait (Print-Safe)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-white-50">PDF Status:</span>
+                            <span class="badge bg-success" id="pdfBadgeStatus">Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-warning fw-bold w-100" onclick="window.print()">
+                            &#128438; Print Poster Now
+                        </button>
+                        <button type="button" class="btn btn-outline-info w-100 fw-semibold" onclick="updatePreviewAndPdf()">
+                            &#8635; Force Regenerate PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- =====================================================================
+             RIGHT: LARGE CENTERED A4 LIVE PREVIEW
+             ===================================================================== -->
+        <div class="poster-preview-column">
+            <div class="a4-preview-canvas-wrapper">
+                <div class="a4-wall-poster" id="livePosterSheet">
+                    <!-- Dynamic Live Poster Injected by JavaScript -->
+                    <div id="livePosterContent" style="display:flex; flex-direction:column; height:100%; justify-content:space-between;">
+                        <!-- Injected dynamically by renderLivePoster() -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Initial Serialized Data -->
+<script id="poster-initial-data" type="application/json">
+{{ {
+    "template_id": template_id,
+    "poster_type": poster_type,
+    "primary_face": {
+        "image_path": primary_face.image_path,
+        "source_type": primary_face.source_type,
+        "label": primary_face.label
+    },
+    "addl_faces": addl_faces
+}|tojson }}
+</script>
+
+<script>
+    const initialDataEl = document.getElementById('poster-initial-data');
+    const initialData = initialDataEl ? JSON.parse(initialDataEl.textContent) : {};
+
+    let currentTemplateId = initialData.template_id || 1;
+    let currentPosterType = initialData.poster_type || 'person_info';
+
+    let primaryFace = initialData.primary_face || {
+        image_path: 'static/person_db/trump.jpg',
+        source_type: 'real_photo',
+        label: 'LAST KNOWN REAL PHOTO'
+    };
+
+    let additionalFaces = initialData.addl_faces || [];
+    let debounceTimer = null;
+
+    // Toggle Left Controls Panel
+    function toggleControlsPanel() {
+        const col = document.getElementById('posterControlsColumn');
+        const btn = document.getElementById('btnToggleControls');
+        if (col.classList.contains('collapsed')) {
+            col.classList.remove('collapsed');
+            btn.innerHTML = '&#9776; Collapse Controls';
+        } else {
+            col.classList.add('collapsed');
+            btn.innerHTML = '&#9776; Expand Controls';
+        }
+    }
+
+    // Accordion Toggle
+    function toggleAccordion(panelId, headerEl) {
+        const panel = document.getElementById(panelId);
+        const isOpen = panel.style.display !== 'none';
+
+        if (isOpen) {
+            panel.style.display = 'none';
+            headerEl.classList.remove('active');
+        } else {
+            panel.style.display = 'block';
+            headerEl.classList.add('active');
+        }
+    }
+
+    // Select Template Purpose
+    function selectTemplate(tplId, tplName) {
+        currentTemplateId = tplId;
+
+        // Update active purpose card UI
+        document.querySelectorAll('.purpose-card').forEach(c => c.classList.remove('active'));
+        const activeCard = document.getElementById('tpl-card-' + tplId);
+        if (activeCard) activeCard.classList.add('active');
+
+        // Update header badge
+        const badge = document.getElementById('activePurposeBadge');
+        if (badge) badge.textContent = 'Template ' + tplId + ': ' + tplName;
+
+        // Dynamic Form Updates based on Purpose
+        const titleInp = document.getElementById('inpTitle');
+        const lblAge = document.getElementById('lblAge');
+        const grpCurrentAge = document.getElementById('grpCurrentAge');
+        const grpClothing = document.getElementById('grpClothing');
+        const grpMissingTimeline = document.getElementById('grpMissingTimeline');
+        const variationGroup = document.getElementById('variationSelectorGroup');
+
+        if (tplId === 4) {
+            titleInp.value = "MISSING PERSON";
+            lblAge.textContent = "Age When Missing:";
+            grpCurrentAge.style.display = "none";
+            grpClothing.style.display = "block";
+            grpMissingTimeline.style.display = "flex";
+            variationGroup.style.display = "none";
+        } else if (tplId === 5) {
+            titleInp.value = "MISSING PERSON — LONG-TERM SEARCH";
+            lblAge.textContent = "Age When Missing:";
+            grpCurrentAge.style.display = "block";
+            grpClothing.style.display = "none";
+            grpMissingTimeline.style.display = "flex";
+            variationGroup.style.display = "block";
+        } else if (tplId === 3) {
+            if (!titleInp.value || titleInp.value === "MISSING PERSON" || titleInp.value.includes("LONG-TERM")) {
+                titleInp.value = "PUBLIC INFORMATION / PERSON OF INTEREST";
+            }
+            lblAge.textContent = "Age:";
+            grpCurrentAge.style.display = "none";
+            grpClothing.style.display = "none";
+            grpMissingTimeline.style.display = "none";
+            variationGroup.style.display = "block";
+        } else if (tplId === 2) {
+            titleInp.value = "PERSON INFORMATION & APPEARANCE VARIATIONS";
+            lblAge.textContent = "Age:";
+            grpCurrentAge.style.display = "none";
+            grpClothing.style.display = "none";
+            grpMissingTimeline.style.display = "none";
+            variationGroup.style.display = "block";
+        } else {
+            // Template 1
+            titleInp.value = "PERSON INFORMATION";
+            lblAge.textContent = "Age:";
+            grpCurrentAge.style.display = "none";
+            grpClothing.style.display = "none";
+            grpMissingTimeline.style.display = "none";
+            variationGroup.style.display = "none";
+        }
+
+        // Collapse Purpose Accordion and expand Image Source section
+        document.getElementById('panel-purpose').style.display = 'none';
+        document.getElementById('acc-header-purpose').classList.remove('active');
+        document.getElementById('panel-images').style.display = 'block';
+        document.getElementById('acc-header-images').classList.add('active');
+
+        // Update live preview & sync PDF
+        renderLivePoster();
+        debouncedPdfSync();
+    }
+
+    // Title preset button clicked
+    function setTitlePreset(presetText) {
+        document.getElementById('inpTitle').value = presetText;
+        onFieldInput();
+    }
+
+    // Set Primary Image
+    function setPrimaryImage(el, path, srcType, label) {
+        primaryFace = { image_path: path, source_type: srcType, label: label };
+        document.querySelectorAll('.image-select-card').forEach(item => item.classList.remove('is-primary'));
+        if (el) el.classList.add('is-primary');
+
+        const primaryLabelInp = document.getElementById('inpPrimaryLabel');
+        if (srcType === 'real_photo') {
+            primaryLabelInp.value = "LAST KNOWN REAL PHOTO";
+        } else if (srcType === 'reconstructed') {
+            primaryLabelInp.value = "COMPUTER-GENERATED RECONSTRUCTION";
+        } else {
+            primaryLabelInp.value = "COMPUTER-GENERATED APPEARANCE";
+        }
+
+        renderLivePoster();
+        debouncedPdfSync();
+    }
+
+    // Update Variations Checkbox Selection
+    function updateVariationsSelection() {
+        const checked = document.querySelectorAll('.var-checkbox:checked');
+        additionalFaces = [];
+        checked.forEach(cb => {
+            additionalFaces.push({
+                image_path: cb.value,
+                source_type: cb.dataset.source || 'variation',
+                label: cb.dataset.label || 'COMPUTER-GENERATED APPEARANCE'
+            });
+        });
+        renderLivePoster();
+        debouncedPdfSync();
+    }
+
+    // Keystroke Handler for Live Updates
+    function onFieldInput() {
+        renderLivePoster();
+        debouncedPdfSync();
+    }
+
+    // Debounced PDF sync to ReportLab backend
+    function debouncedPdfSync() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            updatePreviewAndPdf();
+        }, 600);
+    }
+
+    // Generate Variations from Active Photo
+    function generateVariationsFromActivePhoto(btn) {
+        if (!primaryFace.image_path) {
+            alert("Please select a primary photograph first.");
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = "&#9203; Generating Probable Appearances...";
+        }
+
+        fetch('/api/generate-variations-from-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_path: primaryFace.image_path })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = "&#9889; Generate Probable Appearances from Primary Photo";
+            }
+            if (data.success && data.variations) {
+                additionalFaces = data.variations;
+                if (currentTemplateId === 4 || currentTemplateId === 5) {
+                    selectTemplate(5, 'Missing Person — Real Photo + Probable Appearances');
+                } else {
+                    selectTemplate(2, 'Person + Multiple Appearances');
+                }
+                renderLivePoster();
+                updatePreviewAndPdf();
+            } else {
+                alert("Generation error: " + (data.error || "Unable to generate variations"));
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = "&#9889; Generate Probable Appearances from Primary Photo";
+            }
+            console.error("Network error generating variations:", err);
+        });
+    }
+
+    // =========================================================================
+    // CLIENT-SIDE REAL-TIME WYSIWYG A4 WALL POSTER RENDERER
+    // =========================================================================
+    function renderLivePoster() {
+        const container = document.getElementById('livePosterContent');
+        const title = (document.getElementById('inpTitle').value || 'PERSON INFORMATION').toUpperCase();
+        const name = (document.getElementById('inpName').value || 'RAMESH KUMAR').toUpperCase();
+        const age = document.getElementById('inpAge').value || 'Unknown';
+        const currAge = document.getElementById('inpCurrentAge').value;
+        const gender = document.getElementById('inpGender').value || 'Unknown';
+        const phone = document.getElementById('inpPhone').value || '+91 98765 43210';
+        const altPhone = document.getElementById('inpAltPhone').value;
+        const height = document.getElementById('inpHeight').value || 'Unknown';
+        const build = document.getElementById('inpBuild').value || 'Unknown';
+        const hair = document.getElementById('inpHair').value || 'Unknown';
+        const eyes = document.getElementById('inpEyes').value || 'Unknown';
+        const clothing = document.getElementById('inpClothing').value || 'None specified';
+        const marks = document.getElementById('inpMarks').value || 'None recorded';
+        const loc = document.getElementById('inpLocation').value || 'Location not specified';
+        const dateStr = document.getElementById('inpDate').value || 'Recent';
+        const caseNo = document.getElementById('inpCaseNo').value || 'CR-2026-9041';
+        const agency = document.getElementById('inpAgency').value || 'Law Enforcement Agency';
+        const contactPerson = document.getElementById('inpContactPerson').value || '';
+        const desc = document.getElementById('inpDesc').value || '';
+        const contactNote = document.getElementById('inpContactNote').value || '';
+
+        const primaryImgPath = "/" + primaryFace.image_path;
+        let primaryLabel = document.getElementById('inpPrimaryLabel').value;
+        if (!primaryLabel) {
+            primaryLabel = primaryFace.source_type === 'real_photo' ? "LAST KNOWN REAL PHOTO" : "COMPUTER-GENERATED RECONSTRUCTION";
+        }
+
+        // Contact Box Builder
+        const contactHtml = (isUrgent) => `
+            <div class="poster-contact-callout ${isUrgent ? 'urgent' : ''}">
+                <div class="callout-phone-title">IF YOU HAVE ANY INFORMATION, PLEASE CONTACT IMMEDIATELY:</div>
+                <div class="callout-phone-number">PHONE: ${phone} ${altPhone ? ' &bull; ALT: ' + altPhone : ''}</div>
+                <div style="font-size:0.8rem; margin-top:4px; color:#e2e8f0;">
+                    ${contactPerson ? 'CONTACT: ' + contactPerson + ' &bull; ' : ''}
+                    ${caseNo ? 'CASE REF: ' + caseNo + ' &bull; ' : ''}
+                    ${agency ? agency : ''}
+                </div>
+                ${contactNote ? `<div style="font-size:0.72rem; color:#fef08a; margin-top:2px;">${contactNote}</div>` : ''}
+            </div>
+        `;
+
+        if (currentTemplateId === 1) {
+            // TEMPLATE 1: PERSON INFORMATION POSTER
+            container.innerHTML = `
+                <div>
+                    <!-- Header Banner -->
+                    <div style="background:#0f172a; color:#ffffff; padding:12px; text-align:center; border-radius:4px; margin-bottom:14px;">
+                        <h2 style="font-weight:900; margin:0; letter-spacing:1px; font-size:1.85rem;">${title}</h2>
+                        <div style="font-size:0.75rem; color:#94a3b8; font-weight:700; margin-top:3px;">
+                            CASE REF: ${caseNo} &bull; DATE: ${dateStr}
+                        </div>
+                    </div>
+
+                    <!-- Center Primary Photo Area -->
+                    <div style="text-align:center; margin-bottom:10px;">
+                        <img src="${primaryImgPath}" class="poster-hero-img" alt="Photo" style="height:280px; border-color:#0f172a; border-width:2px;">
+                        <span class="poster-hero-label">${primaryLabel}</span>
+                    </div>
+
+                    <!-- Prominent Name -->
+                    <div class="poster-name-display">${name}</div>
+
+                    <!-- Physical Attributes Grid -->
+                    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; text-align:center; margin-bottom:12px;">
+                        <div><strong style="font-size:0.72rem; color:#64748b;">AGE</strong><br><strong style="font-size:0.95rem;">${age}</strong></div>
+                        <div><strong style="font-size:0.72rem; color:#64748b;">GENDER</strong><br><strong style="font-size:0.95rem;">${gender}</strong></div>
+                        <div><strong style="font-size:0.72rem; color:#64748b;">HEIGHT</strong><br><strong style="font-size:0.95rem;">${height}</strong></div>
+                        <div><strong style="font-size:0.72rem; color:#64748b;">BUILD</strong><br><strong style="font-size:0.95rem;">${build}</strong></div>
+                        <div><strong style="font-size:0.72rem; color:#64748b;">HAIR</strong><br><strong style="font-size:0.95rem;">${hair}</strong></div>
+                        <div><strong style="font-size:0.72rem; color:#64748b;">EYES</strong><br><strong style="font-size:0.95rem;">${eyes}</strong></div>
+                    </div>
+
+                    <!-- Description & Identifying Info -->
+                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:10px; font-size:0.85rem; color:#1e293b; margin-bottom:10px;">
+                        <strong style="color:#0284c7; font-size:0.78rem;">PHYSICAL DESCRIPTION &amp; IDENTIFYING INFORMATION:</strong><br>
+                        ${marks ? '<strong>Marks/Scars:</strong> ' + marks + '. ' : ''}${desc}
+                    </div>
+                </div>
+
+                <div>
+                    ${contactHtml(false)}
+                    ${primaryFace.source_type !== 'real_photo' ? `
+                    <div class="poster-disclaimer-box">
+                        <span class="poster-disclaimer-tag">COMPUTER-GENERATED APPEARANCE:</span>
+                        These images are computer-generated appearance variations. This image is a visual hypothesis and is not a confirmed photograph of the person.
+                    </div>` : ''}
+                </div>
+            `;
+
+        } else if (currentTemplateId === 2) {
+            // TEMPLATE 2: PERSON + MULTIPLE APPEARANCES
+            let subImgsHtml = '';
+            additionalFaces.slice(0, 4).forEach((af, idx) => {
+                subImgsHtml += `
+                    <div style="text-align:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:4px; padding:4px;">
+                        <img src="/${af.image_path}" style="height:92px; width:100%; object-fit:contain;" alt="Var">
+                        <span style="font-size:0.6rem; font-weight:800; color:#334155; display:block; text-transform:uppercase; margin-top:2px;">COMPUTER-GENERATED APPEARANCE</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div>
+                    <!-- Header -->
+                    <div style="background:#1e293b; color:#ffffff; padding:10px; text-align:center; border-radius:4px; margin-bottom:12px;">
+                        <h2 style="font-weight:900; margin:0; font-size:1.65rem;">${title}</h2>
+                    </div>
+
+                    <!-- Split Photo View: Primary on Left, Variations on Right -->
+                    <div style="display:flex; gap:16px; margin-bottom:10px;">
+                        <div style="flex:1.2; text-align:center;">
+                            <img src="${primaryImgPath}" style="height:230px; width:100%; object-fit:contain; border:2px solid #0284c7; border-radius:4px;" alt="Primary">
+                            <span class="poster-hero-label" style="display:block;">${primaryLabel}</span>
+                        </div>
+                        <div style="flex:1.3;">
+                            <div style="font-size:0.75rem; font-weight:800; color:#0f172a; margin-bottom:5px;">POSSIBLE APPEARANCES / HYPOTHESES:</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                ${subImgsHtml || '<div class="text-muted small p-3 bg-light rounded text-center">No additional variations selected.</div>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poster-name-display" style="font-size:1.8rem; margin:6px 0;">${name}</div>
+
+                    <!-- Biometric Attributes Table -->
+                    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:8px; text-align:center; margin-bottom:10px;">
+                        <div><strong style="font-size:0.7rem; color:#64748b;">AGE</strong><br><strong>${age}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">GENDER</strong><br><strong>${gender}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">HEIGHT</strong><br><strong>${height}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">BUILD</strong><br><strong>${build}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">HAIR</strong><br><strong>${hair}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">EYES</strong><br><strong>${eyes}</strong></div>
+                    </div>
+
+                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px; font-size:0.8rem; color:#1e293b;">
+                        <strong style="color:#0284c7;">DETAILS &amp; CIRCUMSTANCES:</strong> ${desc}
+                    </div>
+                </div>
+
+                <div>
+                    ${contactHtml(false)}
+                    <div class="poster-disclaimer-box">
+                        <span class="poster-disclaimer-tag">COMPUTER-GENERATED APPEARANCE:</span>
+                        These images are computer-generated appearance variations. This image is a visual hypothesis and is not a confirmed photograph of the person.
+                    </div>
+                </div>
+            `;
+
+        } else if (currentTemplateId === 3) {
+            // TEMPLATE 3: PUBLIC INFORMATION / PERSON OF INTEREST
+            container.innerHTML = `
+                <div>
+                    <!-- Bold Navy/Yellow Bulletin Header -->
+                    <div style="background:#1e1b4b; color:#facc15; padding:12px; text-align:center; border-radius:4px; margin-bottom:12px;">
+                        <h2 style="font-weight:900; margin:0; font-size:1.95rem; letter-spacing:1px;">${title}</h2>
+                        <div style="color:#ffffff; font-size:0.75rem; font-weight:700;">PUBLIC IDENTIFICATION &amp; INFORMATION BULLETIN</div>
+                    </div>
+
+                    <!-- Photo & Details -->
+                    <div style="text-align:center; margin-bottom:8px;">
+                        <img src="${primaryImgPath}" class="poster-hero-img" alt="Photo" style="height:265px; border-color:#1e1b4b; border-width:2.5px;">
+                        <span class="poster-hero-label" style="background:#1e1b4b;">${primaryLabel}</span>
+                    </div>
+
+                    <div class="poster-name-display" style="color:#1e1b4b; margin:6px 0;">${name}</div>
+
+                    <!-- Details Table -->
+                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:10px; font-size:0.82rem;">
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">CASE #:</span><br><strong>${caseNo}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">AGE:</span><br><strong>${age}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">GENDER:</span><br><strong>${gender}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">HEIGHT:</span><br><strong>${height}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">BUILD:</span><br><strong>${build}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">HAIR:</span><br><strong>${hair}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">EYES:</span><br><strong>${eyes}</strong></div>
+                        <div><span style="color:#64748b; font-size:0.7rem; font-weight:bold;">MARKS:</span><br><strong>${marks}</strong></div>
+                    </div>
+
+                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px; font-size:0.82rem; color:#334155;">
+                        <strong style="color:#1e1b4b;">SUMMARY OF INFORMATION &amp; CIRCUMSTANCES:</strong><br>
+                        ${desc}
+                    </div>
+                </div>
+
+                <div>
+                    ${contactHtml(false)}
+                    ${primaryFace.source_type !== 'real_photo' ? `
+                    <div class="poster-disclaimer-box">
+                        <span class="poster-disclaimer-tag">COMPUTER-GENERATED APPEARANCE:</span>
+                        These images are computer-generated appearance variations. This image is a visual hypothesis and is not a confirmed photograph of the person.
+                    </div>` : ''}
+                </div>
+            `;
+
+        } else if (currentTemplateId === 4) {
+            // TEMPLATE 4: MISSING PERSON — REAL PHOTOGRAPH
+            container.innerHTML = `
+                <div>
+                    <!-- Bold Crimson Alert Header -->
+                    <div style="background:#b91c1c; color:#ffffff; padding:14px; text-align:center; border-radius:4px; margin-bottom:12px;">
+                        <h1 style="font-weight:900; margin:0; font-size:2.45rem; letter-spacing:2px;">MISSING PERSON</h1>
+                        <div style="color:#fef08a; font-size:0.85rem; font-weight:800; letter-spacing:1px; margin-top:2px;">
+                            PLEASE HELP US BRING THEM HOME &bull; SHARE THIS FLYER
+                        </div>
+                    </div>
+
+                    <!-- Very Large Real Photo -->
+                    <div style="text-align:center; margin-bottom:6px;">
+                        <img src="${primaryImgPath}" class="poster-hero-img" alt="Photo" style="height:275px; border-color:#b91c1c; border-width:3px;">
+                        <span class="poster-hero-label" style="background:#b91c1c;">LAST KNOWN REAL PHOTOGRAPH</span>
+                    </div>
+
+                    <!-- Giant Name in Crimson -->
+                    <div class="poster-name-display" style="color:#b91c1c; margin:8px 0; font-size:2.25rem;">${name}</div>
+
+                    <!-- Critical Missing Timeline Bar -->
+                    <div style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:8px 12px; border-radius:4px; font-weight:800; font-size:0.88rem; text-align:center; margin-bottom:10px;">
+                        MISSING SINCE: ${dateStr} &nbsp;&nbsp;|&nbsp;&nbsp; LAST SEEN: ${loc}
+                    </div>
+
+                    <!-- Physical Traits Grid -->
+                    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px; text-align:center; margin-bottom:10px;">
+                        <div><strong style="font-size:0.7rem; color:#64748b;">AGE</strong><br><strong style="font-size:0.95rem;">${age}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">GENDER</strong><br><strong style="font-size:0.95rem;">${gender}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">HEIGHT</strong><br><strong style="font-size:0.95rem;">${height}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">BUILD</strong><br><strong style="font-size:0.95rem;">${build}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">HAIR</strong><br><strong style="font-size:0.95rem;">${hair}</strong></div>
+                        <div><strong style="font-size:0.7rem; color:#64748b;">EYES</strong><br><strong style="font-size:0.95rem;">${eyes}</strong></div>
+                    </div>
+
+                    <!-- Clothing & Identifying Marks -->
+                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:8px; font-size:0.82rem; color:#1e293b;">
+                        <strong style="color:#b91c1c;">CLOTHING &amp; MARKS:</strong> Clothing: ${clothing}. Marks/Scars: ${marks}.<br>
+                        ${desc ? '<strong>Circumstances:</strong> ' + desc : ''}
+                    </div>
+                </div>
+
+                <div>
+                    ${contactHtml(true)}
+                    <!-- Zero AI disclaimer required on pure real photo missing flyer -->
+                </div>
+            `;
+
+        } else if (currentTemplateId === 5) {
+            // TEMPLATE 5: MISSING PERSON — REAL PHOTO + PROBABLE APPEARANCES
+            let probImgsHtml = '';
+            additionalFaces.slice(0, 4).forEach((af, idx) => {
+                probImgsHtml += `
+                    <div style="text-align:center; background:#f8fafc; border:1px solid #94a3b8; border-radius:4px; padding:4px;">
+                        <img src="/${af.image_path}" style="height:90px; width:100%; object-fit:contain;" alt="Probable">
+                        <span style="font-size:0.58rem; font-weight:800; color:#0f172a; display:block; text-transform:uppercase; margin-top:2px;">COMPUTER-GENERATED PROBABLE APPEARANCE</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div>
+                    <!-- Dark Crimson Alert Header -->
+                    <div style="background:#7f1d1d; color:#ffffff; padding:12px; text-align:center; border-radius:4px; margin-bottom:10px;">
+                        <h2 style="font-weight:900; margin:0; font-size:1.85rem; letter-spacing:1px;">MISSING PERSON — LONG-TERM SEARCH</h2>
+                        <div style="color:#fef08a; font-size:0.75rem; font-weight:800;">LAST KNOWN REAL PHOTO AND COMPUTER-GENERATED PROBABLE CURRENT APPEARANCES</div>
+                    </div>
+
+                    <!-- Split View: Last Known Real Photo (Left) + Probable Appearances Grid (Right) -->
+                    <div style="display:flex; gap:14px; margin-bottom:10px;">
+                        <div style="flex:1.2; text-align:center;">
+                            <img src="${primaryImgPath}" style="height:215px; width:100%; object-fit:contain; border:2.5px solid #7f1d1d; border-radius:4px;" alt="Real Photo">
+                            <span class="poster-hero-label" style="background:#7f1d1d; display:block;">LAST KNOWN REAL PHOTOGRAPH</span>
+                        </div>
+                        <div style="flex:1.3;">
+                            <div style="font-size:0.75rem; font-weight:800; color:#0f172a; margin-bottom:4px;">PROBABLE CURRENT APPEARANCES:</div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                                ${probImgsHtml || '<div class="text-muted small p-3 bg-light rounded text-center">Select probable appearances from panel 2.</div>'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="poster-name-display" style="color:#7f1d1d; margin:6px 0; font-size:1.85rem;">${name}</div>
+
+                    <!-- Timeline & Aging Bar -->
+                    <div style="background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:6px 10px; border-radius:4px; font-weight:800; font-size:0.8rem; text-align:center; margin-bottom:8px;">
+                        AGE WHEN MISSING: ${age} ${currAge ? '&bull; ESTIMATED CURRENT AGE: ~' + currAge : ''} &bull; MISSING SINCE: ${dateStr}
+                    </div>
+
+                    <!-- Traits Table -->
+                    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:6px; text-align:center; margin-bottom:8px;">
+                        <div><strong style="font-size:0.68rem; color:#64748b;">GENDER</strong><br><strong>${gender}</strong></div>
+                        <div><strong style="font-size:0.68rem; color:#64748b;">HEIGHT</strong><br><strong>${height}</strong></div>
+                        <div><strong style="font-size:0.68rem; color:#64748b;">BUILD</strong><br><strong>${build}</strong></div>
+                        <div><strong style="font-size:0.68rem; color:#64748b;">HAIR</strong><br><strong>${hair}</strong></div>
+                        <div><strong style="font-size:0.68rem; color:#64748b;">EYES</strong><br><strong>${eyes}</strong></div>
+                        <div><strong style="font-size:0.68rem; color:#64748b;">MARKS</strong><br><strong>${marks}</strong></div>
+                    </div>
+
+                    <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:6px; font-size:0.78rem; color:#1e293b;">
+                        <strong style="color:#7f1d1d;">CIRCUMSTANCES &amp; INVESTIGATIVE DETAILS:</strong> ${desc}
+                    </div>
+                </div>
+
+                <div>
+                    ${contactHtml(true)}
+                    <div class="poster-disclaimer-box">
+                        <span class="poster-disclaimer-tag">COMPUTER-GENERATED PROBABLE APPEARANCE:</span>
+                        Computer-generated probable appearance. This image is a visual hypothesis and is not a confirmed current photograph.
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Call API to sync ReportLab PDF in background
+    function updatePreviewAndPdf() {
+        renderLivePoster();
+
+        const badge = document.getElementById('pdfBadgeStatus');
+        if (badge) {
+            badge.className = "badge bg-warning text-dark";
+            badge.textContent = "Syncing PDF...";
+        }
+
+        const payload = {
+            primary_face: primaryFace,
+            addl_faces: additionalFaces,
+            template_id: currentTemplateId,
+            orientation: 'portrait',
+            person_data: {
+                full_name: document.getElementById('inpName').value,
+                age: document.getElementById('inpAge').value,
+                current_age: document.getElementById('inpCurrentAge').value,
+                gender: document.getElementById('inpGender').value,
+                phone: document.getElementById('inpPhone').value,
+                alt_phone: document.getElementById('inpAltPhone').value,
+                height: document.getElementById('inpHeight').value,
+                build: document.getElementById('inpBuild').value,
+                hair: document.getElementById('inpHair').value,
+                eyes: document.getElementById('inpEyes').value,
+                clothing: document.getElementById('inpClothing').value,
+                identifying_marks: document.getElementById('inpMarks').value,
+                location: document.getElementById('inpLocation').value,
+                date_missing: document.getElementById('inpDate').value,
+                case_number: document.getElementById('inpCaseNo').value,
+                police_station: document.getElementById('inpAgency').value,
+                contact_person: document.getElementById('inpContactPerson').value,
+                description: document.getElementById('inpDesc').value,
+                custom_title: document.getElementById('inpTitle').value,
+                poster_type: currentPosterType
+            }
+        };
+
+        fetch('/api/generate-poster', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const dlBtn = document.getElementById('btnDownloadPdf');
+                dlBtn.href = data.download_url;
+                dlBtn.download = data.pdf_filename;
+
+                if (badge) {
+                    badge.className = "badge bg-success";
+                    badge.textContent = "Ready (" + data.file_size_kb + " KB)";
+                }
+            } else {
+                if (badge) {
+                    badge.className = "badge bg-danger";
+                    badge.textContent = "Error";
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Error generating updated PDF:", err);
+            if (badge) {
+                badge.className = "badge bg-danger";
+                badge.textContent = "Sync Error";
+            }
+        });
+    }
+
+    // Initialize on DOM Ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize dynamic visibility for current template
+        selectTemplate(currentTemplateId,
+            currentTemplateId === 1 ? 'Person Information' :
+            currentTemplateId === 2 ? 'Person + Multiple Appearances' :
+            currentTemplateId === 3 ? 'Public Information / Person of Interest' :
+            currentTemplateId === 4 ? 'Missing Person — Real Photo' :
+            'Missing Person — Real Photo + Probable Appearances'
+        );
+        renderLivePoster();
+    });
+</script>
+{% endblock %}

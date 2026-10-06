@@ -1,0 +1,114 @@
+# =================================================================
+# ThirdEye Project â€” .gitignore
+# =================================================================
+
+# --- Python Bytecode & Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# --- Virtual Environments ---
+.venv/
+venv/
+env/
+ENV/
+ThirdEye311/
+env.bak/
+venv.bak/
+
+# --- IDE & Editor Configuration ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# --- Jupyter Notebooks & Data Explorations ---
+.ipynb_checkpoints/
+*.ipynb
+model/chennai.csv
+model/chennai.ipynb
+
+# --- Operating System Files ---
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+desktop.ini
+
+# --- Logs, Temporary & Tooling Cache ---
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Secrets & Environment Files ---
+.env
+.env.*
+!.env.example
+
+# --- Local Live Database Dumps ---
+thirdeye_db.sql
+*.sql.bak
+!thirdeye_db.example.sql
+
+# --- Runtime-Generated ThirdEye Directories (Preserve directory structure via .gitkeep) ---
+static/generated_faces/*
+!static/generated_faces/.gitkeep
+static/generated_variations/*
+!static/generated_variations/.gitkeep
+static/generated_posters/*
+!static/generated_posters/.gitkeep
+static/uploads/*
+!static/uploads/.gitkeep
+
+# --- Benchmark, Prototype & Development Evaluation Dumps ---
+static/benchmark_eval/
+prototype_eval/
+static/test_variations/
+static/test_variations_asset/
+static/test_variations_v2/
+static/sketch_parts_original_backup/
+scratch_clean_wigs/
+*.webp
+
+# --- Oversized / Non-Production Model Weights (>100MB / Obsolete) ---
+# Disney Research FRAN ONNX weight (118.48 MB - exceeds GitHub 100MB hard limit)
+model/face_reaging/face_reaging.onnx
+# Legacy Keras / MobileNet / U-Net evaluation models (exceed 100MB or obsolete)
+model/sketch_to_face/*.h5
+# Benchmark face parser (50.74 MB - superseded by efficientnet_b0.onnx)
+model/face_parsing/resnet18.onnx
+
+# --- Photographic Variation Assets (Require Manual Acquisition / License Attribution) ---
+static/variation_assets_photo/*.png
+!static/variation_assets_photo/README.md
+
+# --- Reference Portrait Database (Local Testing Only - Private/Public Figures Excluded) ---
+static/person_db/*
+!static/person_db/README.md
+
+
+# --- Offline Development & Scratch Scripts (Preserved locally, excluded from Git) ---
+scratch_*.py
+prepare_photo_assets.py
+generate_pristine_photo_assets.py
+generate_template_previews.py
+clean_and_refine_assets.py
+generate_phase*.py
+run_phase*.py
+storage_cleanup_audit.py
+prototype_hair_transfer.py
+phase*.md
+phase44_model_benchmark.py

@@ -1,0 +1,727 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    /* Phase 5 Photo-to-Sketch Master Styling */
+    .p2s-workspace {
+        padding: 2rem 0 3.5rem 0;
+        min-height: calc(100vh - var(--header-height) - 40px);
+    }
+
+    .p2s-header {
+        text-align: center;
+        margin-bottom: 2.2rem;
+    }
+
+    .p2s-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 14px;
+        background: rgba(9, 132, 227, 0.12);
+        border: 1px solid rgba(0, 206, 201, 0.35);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #00cec9;
+        margin-bottom: 12px;
+    }
+
+    .p2s-title {
+        font-weight: 800;
+        font-size: 2.3rem;
+        letter-spacing: -0.5px;
+        color: #ffffff;
+        margin-bottom: 8px;
+    }
+
+    .p2s-subtitle {
+        color: var(--text-secondary, #b2bec3);
+        font-size: 0.98rem;
+        max-width: 760px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Glass Panels */
+    .p2s-glass-card {
+        background: rgba(30, 39, 46, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        padding: 28px 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .p2s-glass-card:hover {
+        border-color: rgba(0, 206, 201, 0.25);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 24px rgba(9, 132, 227, 0.12);
+    }
+
+    .card-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .card-heading h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-heading .stage-tag {
+        font-size: 0.72rem;
+        padding: 3px 10px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #dfe6e9;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    /* Drag & Drop Zone */
+    .dropzone-container {
+        border: 2px dashed rgba(9, 132, 227, 0.4);
+        border-radius: 14px;
+        background: rgba(10, 15, 20, 0.45);
+        padding: 32px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    .dropzone-container:hover, .dropzone-container.drag-over {
+        border-color: #00cec9;
+        background: rgba(9, 132, 227, 0.08);
+        box-shadow: 0 0 20px rgba(0, 206, 201, 0.2);
+    }
+
+    .dropzone-icon {
+        font-size: 2.8rem;
+        color: #0984e3;
+        margin-bottom: 12px;
+        display: block;
+        transition: transform 0.25s ease;
+    }
+
+    .dropzone-container:hover .dropzone-icon {
+        transform: translateY(-3px) scale(1.05);
+        color: #00cec9;
+    }
+
+    .dropzone-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 6px;
+    }
+
+    .dropzone-hint {
+        font-size: 0.82rem;
+        color: #a4b0be;
+        margin-bottom: 0;
+    }
+
+    /* File Input hidden */
+    .file-input-hidden {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    /* Client-side Source Preview */
+    .client-preview-card {
+        background: rgba(12, 16, 22, 0.7);
+        border: 1px solid rgba(0, 206, 201, 0.2);
+        border-radius: 12px;
+        padding: 14px;
+        margin-top: 18px;
+        display: none;
+    }
+
+    .client-preview-img-wrap {
+        width: 100%;
+        height: 240px;
+        background: #05080b;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .client-preview-img-wrap img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .meta-data-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        color: #dfe6e9;
+        margin-bottom: 12px;
+    }
+
+    .meta-data-bar .filename-truncate {
+        max-width: 160px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 500;
+        color: #00cec9;
+    }
+
+    /* Controls box */
+    .controls-box {
+        background: rgba(15, 22, 28, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin: 18px 0;
+    }
+
+    .control-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #dfe6e9;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .control-label span.value-indicator {
+        color: #00cec9;
+        font-weight: 500;
+    }
+
+    .form-select-dark {
+        background: #0f151c;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.88rem;
+    }
+    .form-select-dark:focus {
+        border-color: #00cec9;
+        box-shadow: 0 0 0 2px rgba(0, 206, 201, 0.25);
+        background: #141b24;
+        color: #ffffff;
+    }
+
+    /* Result Stage Styling */
+    .empty-result-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px 20px;
+        background: rgba(10, 14, 18, 0.4);
+        border: 1px dashed rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        min-height: 380px;
+    }
+
+    .empty-state-icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(9, 132, 227, 0.1);
+        border: 1px solid rgba(0, 206, 201, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        color: #00cec9;
+        margin-bottom: 18px;
+        box-shadow: 0 0 24px rgba(9, 132, 227, 0.15);
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 8px;
+    }
+
+    .empty-state-desc {
+        font-size: 0.88rem;
+        color: #a4b0be;
+        max-width: 380px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Active Comparison Grid */
+    .comparison-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        flex: 1;
+    }
+
+    .images-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .images-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .image-card {
+        background: #070a0e;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .image-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .image-type-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .badge-photo {
+        background: rgba(9, 132, 227, 0.25);
+        color: #74b9ff;
+        border: 1px solid rgba(9, 132, 227, 0.4);
+    }
+
+    .badge-sketch {
+        background: rgba(0, 206, 201, 0.25);
+        color: #00cec9;
+        border: 1px solid rgba(0, 206, 201, 0.4);
+    }
+
+    .image-meta-pill {
+        font-size: 0.72rem;
+        color: #b2bec3;
+    }
+
+    .image-viewport {
+        height: 280px;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+    }
+
+    .image-viewport img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    /* Metrics summary strip */
+    .metrics-summary-strip {
+        background: rgba(15, 22, 30, 0.6);
+        border: 1px solid rgba(0, 206, 201, 0.15);
+        border-radius: 10px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 0.82rem;
+    }
+
+    .metric-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #dfe6e9;
+    }
+
+    .metric-item strong {
+        color: #00cec9;
+    }
+
+    /* Neon Buttons */
+    .btn-neon-primary {
+        background: linear-gradient(135deg, #0984e3 0%, #00cec9 100%);
+        color: #ffffff !important;
+        font-weight: 700;
+        border: none;
+        border-radius: 10px;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 16px rgba(9, 132, 227, 0.35);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-neon-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 22px rgba(0, 206, 201, 0.45);
+        color: #ffffff !important;
+    }
+
+    .btn-neon-primary:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-neon-secondary {
+        background: rgba(30, 39, 46, 0.9);
+        color: #dfe6e9 !important;
+        font-weight: 600;
+        border: 1px solid rgba(0, 206, 201, 0.4);
+        border-radius: 10px;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-neon-secondary:hover {
+        background: rgba(9, 132, 227, 0.2);
+        border-color: #00cec9;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 206, 201, 0.2);
+    }
+</style>
+
+<div class="p2s-workspace">
+    <div class="container-fluid px-lg-5">
+        <!-- Module Header -->
+        <div class="p2s-header">
+            <div class="p2s-badge">
+                <span>&#128444;&#65039;</span> Forensic Biometric Engine &bull; Phase 5
+            </div>
+            <h1 class="p2s-title">Photo to Sketch Converter</h1>
+            <p class="p2s-subtitle">
+                High-precision OpenCV analytical line drawing synthesizer. Converts facial photographs into clean biometric sketches suitable for facial landmark matching and computer-generated reconstruction.
+            </p>
+        </div>
+
+        <!-- Two-Stage Workspace: Input (Left) | Result (Right) -->
+        <div class="row g-4">
+            <!-- STAGE 1: LEFT WORKSPACE - PHOTO INPUT -->
+            <div class="col-lg-5 col-xl-5">
+                <div class="p2s-glass-card">
+                    <div class="card-heading">
+                        <h2><span>&#128247;</span> Photo Input</h2>
+                        <span class="stage-tag">Stage 1: Source</span>
+                    </div>
+
+                    <form id="p2s-form" method="POST" enctype="multipart/form-data">
+                        <!-- Dropzone Area -->
+                        <div class="dropzone-container" id="dropzone">
+                            <input class="file-input-hidden" type="file" id="photo-input" name="photo" accept=".jpg,.jpeg,.png,.webp" required>
+                            <span class="dropzone-icon">&#128444;&#65039;</span>
+                            <div class="dropzone-title" id="dropzone-label">Click or Drag & Drop Photo</div>
+                            <p class="dropzone-hint">Supported: JPG, JPEG, PNG, WEBP (Max 16 MB)</p>
+                        </div>
+
+                        <!-- Instant Client-Side Image Preview -->
+                        <div class="client-preview-card" id="client-preview-card" {% if orig_url %}style="display: block;"{% endif %}>
+                            <div class="client-preview-img-wrap">
+                                <img id="client-preview-img" src="{{ orig_url or '' }}" alt="Source Photo Preview">
+                            </div>
+                            <div class="meta-data-bar">
+                                <span class="filename-truncate" id="preview-filename">{{ orig_filename or 'Selected photo' }}</span>
+                                <span id="preview-dims">{{ metrics.input_dims if metrics else 'Detecting...' }}</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary flex-grow-1 text-light" id="btn-replace">
+                                    <span>&#128260;</span> Replace
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="btn-clear">
+                                    <span>&#10005;</span> Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Simple Optional Controls -->
+                        <div class="controls-box">
+                            <div class="control-label">
+                                <span>Detail Level (Line Sharpness)</span>
+                                <span class="value-indicator" id="detail-indicator">Standard</span>
+                            </div>
+                            <select class="form-select form-select-dark mb-3" name="ksize" id="ksize-select">
+                                <option value="81" {% if metrics and metrics.ksize == 81 %}selected{% endif %}>Fine (Sharp, delicate lines)</option>
+                                <option value="121" {% if not metrics or metrics.ksize == 121 %}selected{% endif %}>Standard / Balanced (Recommended)</option>
+                                <option value="161" {% if metrics and metrics.ksize == 161 %}selected{% endif %}>Bold (Dark, pronounced lines)</option>
+                            </select>
+
+                            <div class="control-label">
+                                <span>Tonal Contrast</span>
+                                <span class="value-indicator" id="contrast-indicator">Balanced (1.0x)</span>
+                            </div>
+                            <select class="form-select form-select-dark" name="contrast" id="contrast-select">
+                                <option value="0.9" {% if metrics and metrics.contrast == 0.9 %}selected{% endif %}>Subtle (0.9x)</option>
+                                <option value="1.0" {% if not metrics or metrics.contrast == 1.0 %}selected{% endif %}>Balanced (1.0x - Standard)</option>
+                                <option value="1.15" {% if metrics and metrics.contrast == 1.15 %}selected{% endif %}>High Contrast (1.15x)</option>
+                            </select>
+                        </div>
+
+                        <!-- Primary Conversion Button: GENERATE SKETCH -->
+                        <div class="mt-4">
+                            <button type="submit" id="btn-generate-sketch" class="btn-neon-primary w-100 py-3">
+                                <span id="btn-icon">&#9999;&#65039;</span>
+                                <span id="btn-text">GENERATE SKETCH</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- STAGE 2: RIGHT WORKSPACE - SKETCH RESULT -->
+            <div class="col-lg-7 col-xl-7">
+                <div class="p2s-glass-card">
+                    <div class="card-heading">
+                        <h2><span>&#10002;</span> Sketch Result</h2>
+                        <span class="stage-tag">Stage 2: Output</span>
+                    </div>
+
+                    {% if sketch_data_url %}
+                        <!-- Active Generated Result State -->
+                        <div class="comparison-grid">
+                            <!-- Side-by-Side Images (Stacked on Mobile) -->
+                            <div class="images-row">
+                                <!-- Original Photo Card -->
+                                <div class="image-card">
+                                    <div class="image-card-header">
+                                        <span class="image-type-badge badge-photo">Original Photo</span>
+                                        <span class="image-meta-pill">{{ metrics.input_dims }}</span>
+                                    </div>
+                                    <div class="image-viewport">
+                                        <img src="{{ orig_url or sketch_data_url }}" alt="Original Photograph">
+                                    </div>
+                                </div>
+
+                                <!-- Generated Line Sketch Card -->
+                                <div class="image-card">
+                                    <div class="image-card-header">
+                                        <span class="image-type-badge badge-sketch">Generated Sketch</span>
+                                        <span class="image-meta-pill">{{ metrics.output_dims }}</span>
+                                    </div>
+                                    <div class="image-viewport">
+                                        <img src="{{ sketch_data_url }}" alt="Generated Analytical Line Sketch">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Performance & Metrics Strip -->
+                            <div class="metrics-summary-strip">
+                                <div class="metric-item">
+                                    <span>Source:</span>
+                                    <strong title="{{ orig_filename }}">{{ orig_filename[:20] + '...' if orig_filename|length > 20 else orig_filename }}</strong>
+                                </div>
+                                <div class="metric-item">
+                                    <span>Resolution:</span>
+                                    <strong>{{ metrics.output_dims }}</strong>
+                                </div>
+                                <div class="metric-item">
+                                    <span>Latency:</span>
+                                    <strong>{{ metrics.processing_time_ms }} ms (CPU)</strong>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons: Download & Continue -->
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-6">
+                                    <a href="{{ sketch_url or sketch_data_url }}" download="thirdeye_sketch_{{ orig_filename or 'output' }}.jpg" id="btn-download-sketch" class="btn-neon-primary w-100 py-3">
+                                        <span>&#11015;&#65039;</span> DOWNLOAD SKETCH
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Downstream handoff to Reconstruction (Construct Face) -->
+                                    <form method="POST" action="{{ url_for('construct_face') }}" class="m-0" id="construct-handoff-form">
+                                        <input type="hidden" name="sketch_data" value="{{ sketch_data_url }}">
+                                        {% if sketch_filename %}
+                                            <input type="hidden" name="sketch_filename" value="{{ sketch_filename }}">
+                                        {% endif %}
+                                        <button type="submit" id="btn-use-reconstruction" class="btn-neon-secondary w-100 py-3">
+                                            <span>&#128260;</span> USE SKETCH FOR RECONSTRUCTION
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Empty State: Waiting for input -->
+                        <div class="empty-result-state" id="empty-state">
+                            <div class="empty-state-icon-circle">
+                                <span>&#9999;&#65039;</span>
+                            </div>
+                            <h3 class="empty-state-title">Upload a photograph to begin.</h3>
+                            <p class="empty-state-desc">
+                                Select or drag a portrait photo into the input panel on the left and click <strong>Generate Sketch</strong> to create an analytical line drawing.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Client-side Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropzone = document.getElementById('dropzone');
+    const photoInput = document.getElementById('photo-input');
+    const previewCard = document.getElementById('client-preview-card');
+    const previewImg = document.getElementById('client-preview-img');
+    const previewFilename = document.getElementById('preview-filename');
+    const previewDims = document.getElementById('preview-dims');
+    const btnReplace = document.getElementById('btn-replace');
+    const btnClear = document.getElementById('btn-clear');
+    const p2sForm = document.getElementById('p2s-form');
+    const btnGenerate = document.getElementById('btn-generate-sketch');
+    const btnText = document.getElementById('btn-text');
+    const btnIcon = document.getElementById('btn-icon');
+
+    // Drag and Drop Hover Effects
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        });
+    });
+
+    // Handle File Drop
+    dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            photoInput.files = e.dataTransfer.files;
+            handleFileSelection(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Handle File Browser Selection
+    photoInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            handleFileSelection(this.files[0]);
+        }
+    });
+
+    // Function to render client-side preview
+    function handleFileSelection(file) {
+        if (!file) return;
+
+        // Verify valid image type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            alert('Unsupported image format. Please select a JPG, PNG, or WEBP image.');
+            photoInput.value = '';
+            return;
+        }
+
+        // Show filename
+        previewFilename.textContent = file.name;
+        previewFilename.title = file.name;
+
+        // Read and display preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.onload = function() {
+                previewDims.textContent = `${this.naturalWidth} × ${this.naturalHeight} px`;
+            };
+            previewCard.style.display = 'block';
+            dropzone.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Replace photo
+    btnReplace.addEventListener('click', function() {
+        photoInput.click();
+    });
+
+    // Remove photo
+    btnClear.addEventListener('click', function() {
+        photoInput.value = '';
+        previewImg.src = '';
+        previewCard.style.display = 'none';
+        dropzone.style.display = 'block';
+    });
+
+    // Submit handler: Loading state & duplicate click protection
+    p2sForm.addEventListener('submit', function(e) {
+        if (!photoInput.files || photoInput.files.length === 0) {
+            {% if not orig_url %}
+            e.preventDefault();
+            alert('Please select a photograph to convert.');
+            return;
+            {% endif %}
+        }
+
+        // Disable button, show loading spinner
+        btnGenerate.disabled = true;
+        btnIcon.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>';
+        btnText.textContent = 'Converting photograph to sketch...';
+    });
+});
+</script>
+{% endblock %}
